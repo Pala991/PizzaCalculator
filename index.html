@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pizza Calculator 🍕</title>
+  <meta name="description" content="Calcolatore di dosi per l'impasto della pizza perfetta">
+  <meta name="theme-color" content="#E85D04">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍕</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+    body{font-family:'Nunito',-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#FFF8F0 0%,#FFE8D6 50%,#FFF0E0 100%);color:#370617;min-height:100vh;min-height:100dvh;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom,20px)}
+    :root{--primary:#E85D04;--primary-dark:#DC2F02;--primary-light:#F48C06;--accent:#FFBA08;--bg:#FFF8F0;--bg-card:#FFFFFF;--text:#370617;--text-light:#6B4226;--text-muted:#9B8578;--success:#38B000;--border:#F0DFD0;--shadow:0 4px 20px rgba(232,93,4,0.1);--shadow-lg:0 8px 40px rgba(232,93,4,0.15);--radius:16px;--radius-sm:10px;--transition:0.3s cubic-bezier(0.4,0,0.2,1)}
+
+    .header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);padding:1.8rem 1.5rem 2.2rem;text-align:center;position:relative;overflow:hidden}
+    .header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,0.08) 0%,transparent 60%);animation:headerGlow 8s ease-in-out infinite}
+    @keyframes headerGlow{0%,100%{transform:translate(0,0)}50%{transform:translate(10%,10%)}}
+    .header h1{font-size:1.9rem;font-weight:900;color:white;position:relative;text-shadow:0 2px 10px rgba(0,0,0,0.15)}
+    .header p{color:rgba(255,255,255,0.85);font-size:0.9rem;font-weight:600;margin-top:0.2rem;position:relative}
+    .pizza-icon{font-size:2.6rem;display:block;margin-bottom:0.3rem;position:relative;animation:pizzaBounce 3s ease-in-out infinite}
+    @keyframes pizzaBounce{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-5px) rotate(-3deg)}75%{transform:translateY(-3px) rotate(3deg)}}
+
+    .container{max-width:480px;margin:0 auto;padding:0 1rem;position:relative;top:-1.5rem}
+    .mode-tabs{display:flex;background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1rem}
+    .mode-tab{flex:1;padding:0.8rem 0.8rem;text-align:center;font-weight:700;font-size:0.85rem;cursor:pointer;transition:var(--transition);border:none;background:transparent;color:var(--text-muted);font-family:inherit}
+    .mode-tab.active{color:white;background:linear-gradient(135deg,var(--primary),var(--primary-dark))}
+    .mode-tab:not(.active):hover{color:var(--primary);background:rgba(232,93,4,0.05)}
+    .mode-tab .tab-icon{display:block;font-size:1.3rem;margin-bottom:0.15rem}
+
+    .card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.15rem;margin-bottom:0.85rem;transition:var(--transition)}
+    .card-title{font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--primary);margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem}
+    .input-group{margin-bottom:0.85rem}
+    .input-group:last-child{margin-bottom:0}
+    .input-label{display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;font-weight:700;color:var(--text-light);margin-bottom:0.35rem;flex-wrap:wrap;gap:0.2rem}
+    .input-label .value-badge{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;padding:0.12rem 0.55rem;border-radius:20px;font-size:0.78rem;font-weight:800;flex-shrink:0}
+
+    input[type="number"],select,input[type="datetime-local"]{width:100%;padding:0.7rem 0.9rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:0.95rem;font-weight:600;color:var(--text);background:#FEFCFA;transition:var(--transition);-webkit-appearance:none;appearance:none;min-width:0}
+    input[type="datetime-local"]{font-size:0.82rem;padding:0.6rem 0.5rem}
+    select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23E85D04' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;padding-right:2.5rem}
+    input[type="number"]:focus,select:focus,input[type="datetime-local"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,93,4,0.15)}
+    input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    input[type="number"]{-moz-appearance:textfield}
+
+    input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:linear-gradient(to right,var(--primary) 0%,var(--primary) var(--progress,50%),#EDE0D4 var(--progress,50%),#EDE0D4 100%);outline:none;transition:var(--transition)}
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:white;border:3px solid var(--primary);box-shadow:0 2px 10px rgba(232,93,4,0.3);cursor:pointer;transition:var(--transition)}
+    input[type="range"]::-webkit-slider-thumb:active{transform:scale(1.15);box-shadow:0 2px 15px rgba(232,93,4,0.5)}
+    input[type="range"]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:white;border:3px solid var(--primary);box-shadow:0 2px 10px rgba(232,93,4,0.3);cursor:pointer}
+
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0}
+    .toggle-labels{display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;font-weight:700}
+    .toggle-label-text{transition:var(--transition);color:var(--text-muted)}
+    .toggle-label-text.active{color:var(--primary)}
+    .toggle-switch{position:relative;width:50px;height:27px;flex-shrink:0}
+    .toggle-switch input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--primary-light);border-radius:28px;transition:var(--transition)}
+    .toggle-slider::before{content:'';position:absolute;height:21px;width:21px;left:3px;bottom:3px;background:white;border-radius:50%;transition:var(--transition);box-shadow:0 1px 4px rgba(0,0,0,0.15)}
+    .toggle-switch input:checked+.toggle-slider{background:var(--primary-dark)}
+    .toggle-switch input:checked+.toggle-slider::before{transform:translateX(23px)}
+
+    .inline-inputs{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;min-width:0}
+    .inline-inputs>div{min-width:0}
+    .inline-inputs.three{grid-template-columns:1fr 1fr 1fr}
+
+    .hint-text{font-size:0.73rem;color:var(--text-muted);font-weight:600;margin-top:0.25rem;font-style:italic}
+    .success-text{font-size:0.73rem;color:var(--success);font-weight:700;margin-top:0.25rem}
+    .warning-text{font-size:0.73rem;color:#DC2F02;font-weight:700;margin-top:0.25rem;padding:0.35rem 0.6rem;background:rgba(220,47,2,0.07);border-radius:8px}
+    .info-box{font-size:0.75rem;color:var(--text-light);font-weight:600;padding:0.5rem 0.7rem;background:rgba(232,93,4,0.05);border-radius:8px;border-left:3px solid var(--primary-light);margin-top:0.5rem;line-height:1.5}
+
+    /* WARNINGS */
+    .warning-item{display:flex;align-items:flex-start;gap:0.5rem;padding:0.5rem 0.7rem;margin-bottom:0.4rem;border-radius:8px;font-size:0.76rem;font-weight:600;line-height:1.45;animation:fadeIn 0.2s ease}
+    .warning-item.danger{background:rgba(220,47,2,0.08);border-left:3px solid #DC2F02;color:#9D0208}
+    .warning-item.caution{background:rgba(255,186,8,0.12);border-left:3px solid #FFBA08;color:#6B4226}
+    .warning-item.tip{background:rgba(56,176,0,0.06);border-left:3px solid #38B000;color:#2D6A0F}
+    .warning-item .wi-icon{flex-shrink:0;font-size:0.95rem;line-height:1.3}
+
+    /* STRATEGY BADGE */
+    .strategy-badge{padding:0.55rem 0.7rem;border-radius:var(--radius-sm);font-size:0.78rem;font-weight:700;line-height:1.45;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap}
+    .strategy-badge.fridge{background:rgba(59,130,246,0.08);border:2px solid rgba(59,130,246,0.2);color:#1E40AF}
+    .strategy-badge.room{background:rgba(56,176,0,0.06);border:2px solid rgba(56,176,0,0.15);color:#2D6A0F}
+    .strategy-badge .sb-icon{font-size:1.3rem}
+    .strategy-badge .sb-reason{font-size:0.72rem;font-weight:600;opacity:0.8;width:100%}
+    .strategy-toggle-btn{border:none;background:transparent;color:var(--text-muted);font-family:inherit;font-size:0.73rem;font-weight:700;cursor:pointer;padding:0.2rem 0.4rem;transition:var(--transition)}
+    .strategy-toggle-btn:hover{color:var(--primary)}
+
+    /* TRAY LIST */
+    .tray-item{background:#FDF8F4;border:2px solid var(--border);border-radius:var(--radius-sm);padding:0.8rem;margin-bottom:0.6rem;position:relative;animation:fadeIn 0.2s ease}
+    .tray-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem}
+    .tray-item-title{font-size:0.8rem;font-weight:800;color:var(--primary)}
+    .tray-remove-btn,.flour-remove-btn{width:28px;height:28px;border-radius:50%;border:none;background:rgba(220,47,2,0.1);color:var(--primary-dark);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+    .tray-remove-btn:hover,.flour-remove-btn:hover{background:rgba(220,47,2,0.2)}
+    .tray-dough-badge{display:inline-block;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;padding:0.2rem 0.65rem;border-radius:20px;font-size:0.75rem;font-weight:800;margin-top:0.4rem}
+    .add-tray-btn,.add-flour-btn{width:100%;padding:0.7rem;border:2px dashed var(--primary-light);border-radius:var(--radius-sm);background:transparent;color:var(--primary);font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;transition:var(--transition)}
+    .add-tray-btn:hover,.add-flour-btn:hover{background:rgba(232,93,4,0.05);border-color:var(--primary)}
+    .tray-custom-dims{display:none;margin-top:0.5rem;animation:fadeIn 0.2s ease}
+    .tray-custom-dims.show{display:block}
+
+    /* FLOUR BLEND */
+    .flour-item{background:#FDF8F4;border:2px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem;margin-bottom:0.5rem;animation:fadeIn 0.2s ease}
+    .flour-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem}
+    .flour-item-title{font-size:0.78rem;font-weight:800;color:var(--primary)}
+    .flour-item-row{display:grid;grid-template-columns:1fr auto;gap:0.5rem;align-items:end}
+    .flour-pct-input{width:70px;text-align:center;font-size:0.88rem;padding:0.5rem}
+    .w-badge{display:inline-block;background:linear-gradient(135deg,#6B4226,#370617);color:white;padding:0.15rem 0.5rem;border-radius:12px;font-size:0.7rem;font-weight:800}
+    .w-result-badge{display:inline-block;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.82rem;font-weight:800;margin-right:0.4rem}
+    .flour-suggestion{display:flex;align-items:center;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;padding:0.5rem 0.7rem;background:rgba(56,176,0,0.06);border-radius:8px;border-left:3px solid var(--success)}
+    .flour-suggestion .label{font-size:0.73rem;font-weight:700;color:var(--success)}
+
+    /* PREFERMENT TABS */
+    .pf-tabs{display:flex;gap:0.4rem;margin-bottom:0.8rem}
+    .pf-tab{flex:1;padding:0.55rem 0.3rem;text-align:center;font-weight:700;font-size:0.75rem;cursor:pointer;transition:var(--transition);border:2px solid var(--border);border-radius:var(--radius-sm);background:#FEFCFA;color:var(--text-muted);font-family:inherit}
+    .pf-tab.active{border-color:var(--primary);background:linear-gradient(135deg,rgba(232,93,4,0.08),rgba(220,47,2,0.08));color:var(--primary-dark)}
+    .pf-tab:not(.active):hover{border-color:var(--primary-light);color:var(--primary)}
+    .pf-tab .pf-icon{display:block;font-size:1.2rem;margin-bottom:0.1rem}
+    .pf-details{display:none;animation:fadeIn 0.2s ease}
+    .pf-details.show{display:block}
+
+    /* SCHEDULE */
+    .schedule{padding:0.3rem 0}
+    .schedule-step{display:flex;gap:0.85rem;position:relative;padding-bottom:1rem}
+    .schedule-step:last-child{padding-bottom:0}
+    .schedule-step:last-child .schedule-line{display:none}
+    .schedule-dot-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:20px}
+    .schedule-dot{width:14px;height:14px;border-radius:50%;background:var(--primary);flex-shrink:0;z-index:1;border:2px solid white;box-shadow:0 1px 4px rgba(232,93,4,0.3)}
+    .schedule-dot.highlight{width:18px;height:18px;background:var(--primary-dark);box-shadow:0 2px 8px rgba(220,47,2,0.4)}
+    .schedule-line{position:absolute;left:9px;top:20px;bottom:0;width:2px;background:var(--border)}
+    .schedule-content{flex:1;min-width:0}
+    .schedule-time{font-size:0.73rem;font-weight:800;color:var(--primary);text-transform:uppercase}
+    .schedule-title{font-size:0.88rem;font-weight:700;color:var(--text);margin-top:0.1rem}
+    .schedule-detail{font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-top:0.1rem;line-height:1.4}
+    .schedule-day-divider{font-size:0.7rem;font-weight:800;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.05em;padding:0.3rem 0 0.5rem;margin-top:0.2rem}
+
+    /* RESULTS */
+    .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem}
+    .result-card{background:var(--bg-card);border-radius:var(--radius);padding:0.9rem;text-align:center;box-shadow:var(--shadow);transition:var(--transition);animation:resultPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;position:relative;overflow:hidden}
+    .result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .result-card.flour::before{background:linear-gradient(90deg,#D4A574,#C4956A)}
+    .result-card.water::before{background:linear-gradient(90deg,#60A5FA,#3B82F6)}
+    .result-card.salt::before{background:linear-gradient(90deg,#A8A29E,#78716C)}
+    .result-card.yeast::before{background:linear-gradient(90deg,#FBBF24,#F59E0B)}
+    .result-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+    @keyframes resultPop{0%{opacity:0;transform:scale(0.9) translateY(10px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+    .result-card:nth-child(1){animation-delay:0s}.result-card:nth-child(2){animation-delay:0.05s}.result-card:nth-child(3){animation-delay:0.1s}.result-card:nth-child(4){animation-delay:0.15s}
+    .result-icon{font-size:1.8rem;margin-bottom:0.2rem}
+    .result-name{font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em}
+    .result-value{font-size:1.5rem;font-weight:900;color:var(--text);margin:0.15rem 0}
+    .result-unit{font-size:0.8rem;font-weight:700;color:var(--primary)}
+
+    .summary-bar{background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:var(--radius);padding:0.9rem 1rem;margin-top:0.65rem;display:flex;justify-content:space-around;box-shadow:var(--shadow-lg);animation:resultPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s both}
+    .summary-item{text-align:center}
+    .summary-label{font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.05em}
+    .summary-value{font-size:1.1rem;font-weight:900;color:white}
+
+    .pf-result-section{margin-top:0.65rem;background:#FDF8F4;border:2px solid var(--border);border-radius:var(--radius-sm);padding:0.9rem;animation:fadeIn 0.3s ease}
+    .pf-result-title{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--primary-dark);margin-bottom:0.5rem}
+    .pf-result-row{display:flex;justify-content:space-between;padding:0.25rem 0;font-size:0.85rem}
+    .pf-result-row .label{font-weight:600;color:var(--text-light)}
+    .pf-result-row .value{font-weight:800;color:var(--text)}
+
+    .tray-weights{margin-top:0.65rem}
+    .tray-weight-item{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.7rem;background:#FDF8F4;border-radius:var(--radius-sm);margin-bottom:0.4rem;font-size:0.85rem}
+    .tray-weight-name{font-weight:700;color:var(--text-light)}
+    .tray-weight-value{font-weight:900;color:var(--primary);font-size:0.95rem}
+
+    .mode-content{display:none}.mode-content.active{display:block;animation:fadeIn 0.3s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    .footer{text-align:center;padding:1.5rem 1rem 1rem;font-size:0.72rem;color:var(--text-muted);font-weight:600}
+
+    .collapsible-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+    .collapsible-header .chevron{transition:var(--transition);font-size:0.9rem;color:var(--text-muted)}
+    .collapsible-header .chevron.open{transform:rotate(180deg)}
+    .collapsible-body{display:none;animation:fadeIn 0.2s ease}
+    .collapsible-body.open{display:block}
+
+    .install-banner{display:none;background:linear-gradient(135deg,#370617,#6A040F);color:white;padding:0.7rem 1.15rem;border-radius:var(--radius);margin-bottom:1rem;align-items:center;justify-content:space-between;gap:0.75rem;animation:fadeIn 0.4s ease}
+    .install-banner.show{display:flex}
+    .install-banner-text{font-size:0.8rem;font-weight:700}
+    .install-btn{background:var(--accent);color:var(--text);border:none;padding:0.4rem 1rem;border-radius:20px;font-family:inherit;font-size:0.78rem;font-weight:800;cursor:pointer;white-space:nowrap;transition:var(--transition)}
+    .install-btn:hover{transform:scale(1.05)}
+    .install-close{background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.2rem;cursor:pointer;padding:0;line-height:1}
+
+    @media(max-width:380px){.header h1{font-size:1.5rem}.result-value{font-size:1.2rem}.container{padding:0 0.7rem}.inline-inputs.three{grid-template-columns:1fr 1fr 1fr;gap:0.4rem}}
+    @media(min-width:481px){.container{padding:0 1.5rem}.header{padding:2.2rem 2rem 2.8rem}}
+    @media print{.header{background:none;color:var(--text);padding:1rem}.header h1,.header p{color:var(--text);text-shadow:none}.card,.result-card,.summary-bar{box-shadow:none;border:1px solid #ddd}.mode-tabs{display:none}body{background:white}}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <span class="pizza-icon">🍕</span>
+    <h1>Pizza Calculator</h1>
+    <p>Calcola le dosi perfette per il tuo impasto</p>
+  </header>
+
+  <main class="container">
+    <div class="install-banner" id="installBanner">
+      <span class="install-banner-text">📱 Installa l'app!</span>
+      <button class="install-btn" id="installBtn">Installa</button>
+      <button class="install-close" id="installClose">&times;</button>
+    </div>
+
+    <!-- MODE TABS -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="flour" onclick="switchMode('flour')">
+        <span class="tab-icon">🌾</span>Da Farina
+      </button>
+      <button class="mode-tab" data-mode="tray" onclick="switchMode('tray')">
+        <span class="tab-icon">🍽️</span>Da Teglie
+      </button>
+    </div>
+
+    <!-- FLOUR MODE -->
+    <div class="mode-content active" id="flourMode">
+      <div class="card">
+        <div class="card-title">🌾 Quantità di farina</div>
+        <div class="input-group">
+          <label class="input-label" for="flourAmount">Farina (grammi)</label>
+          <input type="number" id="flourAmount" value="1000" min="100" max="10000" step="50" inputmode="numeric" oninput="calculate()">
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="numBalls">Numero di panetti</label>
+          <input type="number" id="numBalls" value="4" min="1" max="50" step="1" inputmode="numeric" oninput="calculate()">
+          <p class="hint-text" id="ballWeightHint"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAY MODE -->
+    <div class="mode-content" id="trayMode">
+      <div class="card">
+        <div class="card-title">🍽️ Teglie</div>
+        <div id="trayList"></div>
+        <button class="add-tray-btn" onclick="addTray()">+ Aggiungi teglia</button>
+        <div class="input-group" style="margin-top:0.85rem">
+          <label class="input-label">Stile pizza</label>
+          <select id="pizzaStyle" onchange="calculate()">
+            <option value="0.45">Sottile / Napoletana</option>
+            <option value="0.65" selected>Classica</option>
+            <option value="0.85">Alta / Focaccia</option>
+            <option value="0.75">Pinza Romana</option>
+          </select>
+          <p class="hint-text" id="trayFlourHint"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOUR TYPE / BLEND -->
+    <div class="card">
+      <div class="collapsible-header" onclick="toggleFlourPanel()">
+        <div class="card-title" style="margin-bottom:0">🌾 Tipo di farina (facoltativo)</div>
+        <span class="chevron" id="flourChevron">▼</span>
+      </div>
+      <div class="collapsible-body" id="flourPanel">
+        <div style="margin-top:0.75rem">
+          <div class="input-group">
+            <label class="input-label">Modalità</label>
+            <div class="pf-tabs" style="margin-bottom:0">
+              <button class="pf-tab active" data-fm="brand" onclick="switchFlourMode('brand')">
+                <span class="pf-icon">🏷️</span>Per marca
+              </button>
+              <button class="pf-tab" data-fm="blend" onclick="switchFlourMode('blend')">
+                <span class="pf-icon">⚗️</span>Miscela
+              </button>
+              <button class="pf-tab" data-fm="manual" onclick="switchFlourMode('manual')">
+                <span class="pf-icon">✏️</span>Manuale
+              </button>
+            </div>
+          </div>
+
+          <!-- BRAND MODE -->
+          <div id="flourBrandMode">
+            <div class="input-group">
+              <label class="input-label" for="flourBrand">Marca / tipo</label>
+              <select id="flourBrand" onchange="onFlourBrandChange()">
+              </select>
+            </div>
+            <div id="brandInfo"></div>
+          </div>
+
+          <!-- BLEND MODE -->
+          <div id="flourBlendMode" style="display:none">
+            <div id="blendList"></div>
+            <button class="add-flour-btn" onclick="addBlendFlour()">+ Aggiungi farina</button>
+            <div id="blendResult" style="margin-top:0.6rem"></div>
+            <div class="info-box" style="margin-top:0.6rem">
+              <strong>💡 Mischiare farine:</strong> Miscela una farina forte (Manitoba, W>320) con una più debole per ottenere la forza desiderata. Ad es. 30% Manitoba + 70% tipo 00 → buon bilanciamento per pizza classica.
+            </div>
+          </div>
+
+          <!-- MANUAL MODE -->
+          <div id="flourManualMode" style="display:none">
+            <div class="input-group">
+              <label class="input-label">Conosci il W della tua farina?</label>
+              <div class="pf-tabs" style="margin-bottom:0">
+                <button class="pf-tab active" data-wm="yes" onclick="switchWMode('yes')">Sì, conosco W</button>
+                <button class="pf-tab" data-wm="no" onclick="switchWMode('no')">No, stimo</button>
+              </div>
+            </div>
+            <div id="wKnownMode" style="margin-top:0.6rem">
+              <div class="input-group">
+                <label class="input-label" for="manualW">Valore W</label>
+                <input type="number" id="manualW" value="260" min="90" max="450" step="5" inputmode="numeric" oninput="onManualWChange()">
+              </div>
+            </div>
+            <div id="wEstimateMode" style="display:none;margin-top:0.6rem">
+              <div class="input-group">
+                <label class="input-label" for="flourProtein">Proteine (% sulla confezione)</label>
+                <input type="number" id="flourProtein" value="12" min="8" max="18" step="0.1" inputmode="decimal" oninput="onProteinChange()">
+                <p class="hint-text">Guarda il valore "Proteine" sulla tabella nutrizionale della confezione</p>
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="flourTypeEst">Tipo di farina</label>
+                <select id="flourTypeEst" onchange="onProteinChange()">
+                  <option value="00">Tipo 00</option>
+                  <option value="0">Tipo 0</option>
+                  <option value="1">Tipo 1</option>
+                  <option value="2">Tipo 2</option>
+                  <option value="int">Integrale</option>
+                  <option value="semola">Semola rimacinata</option>
+                </select>
+              </div>
+              <div id="wEstimateResult"></div>
+            </div>
+          </div>
+
+          <!-- W SUMMARY -->
+          <div id="wSummary" style="margin-top:0.7rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARAMETERS -->
+    <div class="card">
+      <div class="card-title">⚙️ Parametri impasto</div>
+      <div class="input-group">
+        <label class="input-label">Idratazione <span class="value-badge" id="hydrationBadge">65%</span></label>
+        <input type="range" id="hydration" min="50" max="85" value="65" step="1" oninput="onHydrationChange()" style="--progress:43%">
+        <p class="hint-text" id="hydrationHint"></p>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Sale <span class="value-badge" id="saltBadge">2.8%</span></label>
+        <input type="range" id="saltPct" min="1.5" max="4" value="2.8" step="0.1" oninput="onSaltChange()" style="--progress:52%">
+      </div>
+      <div class="input-group">
+        <div class="toggle-row">
+          <div class="toggle-labels">
+            <span class="toggle-label-text active" id="yeastLabelFresh">🧊 Lievito fresco</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="yeastType" onchange="calculate()">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label-text" id="yeastLabelDry">📦 Secco</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRE-FERMENT -->
+    <div class="card">
+      <div class="card-title">🫗 Pre-fermento</div>
+      <div class="pf-tabs">
+        <button class="pf-tab active" data-pf="none" onclick="switchPreferment('none')">
+          <span class="pf-icon">🚫</span>Nessuno
+        </button>
+        <button class="pf-tab" data-pf="poolish" onclick="switchPreferment('poolish')">
+          <span class="pf-icon">🫗</span>Poolish
+        </button>
+        <button class="pf-tab" data-pf="biga" onclick="switchPreferment('biga')">
+          <span class="pf-icon">🍞</span>Biga
+        </button>
+      </div>
+      <div class="pf-details" id="pfDetails">
+        <div class="input-group">
+          <label class="input-label">Farina nel pre-fermento <span class="value-badge" id="pfPctBadge">30%</span></label>
+          <input type="range" id="pfPct" min="15" max="50" value="30" step="1" oninput="onPfPctChange()" style="--progress:33%">
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="pfHours">Durata pre-fermento (ore)</label>
+          <input type="number" id="pfHours" value="14" min="6" max="24" step="1" inputmode="numeric" oninput="calculate()">
+        </div>
+        <p class="hint-text" id="pfHint"></p>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="card">
+      <div class="card-title">🕐 Pianificazione</div>
+      <div class="inline-inputs" style="margin-bottom:0.85rem">
+        <div>
+          <label class="input-label" for="startTime">Inizio</label>
+          <input type="datetime-local" id="startTime" onchange="onTimeChange()">
+        </div>
+        <div>
+          <label class="input-label" for="stretchTime">Stesura</label>
+          <input type="datetime-local" id="stretchTime" onchange="onTimeChange()">
+        </div>
+      </div>
+      <p class="hint-text" id="totalHoursHint" style="margin-bottom:0.7rem"></p>
+
+      <!-- STRATEGY (auto/manual) -->
+      <div id="strategySection">
+        <div id="strategyBadge"></div>
+        <div id="strategyBreakdown" class="inline-inputs three" style="margin-top:0.6rem">
+          <div>
+            <label class="input-label">🌡️ Amb. prima</label>
+            <input type="number" id="roomBefore" value="2" min="0.5" max="24" step="0.5" inputmode="decimal" oninput="calculate()" style="font-size:0.85rem;background:#f5f0eb" disabled>
+            <p class="hint-text" style="text-align:center">ore</p>
+          </div>
+          <div id="fridgeColumn">
+            <label class="input-label">❄️ Frigo</label>
+            <input type="number" id="fridgeHours" value="0" readonly style="font-size:0.85rem;background:#f5f0eb;color:var(--text-muted)">
+            <p class="hint-text" style="text-align:center">ore</p>
+          </div>
+          <div>
+            <label class="input-label">🌡️ Amb. dopo</label>
+            <input type="number" id="roomAfter" value="1.5" min="0.5" max="6" step="0.5" inputmode="decimal" oninput="calculate()" style="font-size:0.85rem;background:#f5f0eb" disabled>
+            <p class="hint-text" style="text-align:center">ore</p>
+          </div>
+        </div>
+        <div style="text-align:right;margin-top:0.3rem">
+          <button class="strategy-toggle-btn" id="strategyToggleBtn" onclick="toggleManualStrategy()">✏️ Personalizza</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCESSO -->
+    <div class="card">
+      <div class="card-title">🤲 Processo</div>
+      <div class="inline-inputs" style="margin-bottom:0.85rem">
+        <div>
+          <label class="input-label" for="numFolds">Pieghe (stretch&fold)</label>
+          <input type="number" id="numFolds" value="3" min="0" max="5" step="1" inputmode="numeric" oninput="calculate()">
+        </div>
+        <div>
+          <label class="input-label" for="ballDivBefore">Panetti prima di (ore)</label>
+          <input type="number" id="ballDivBefore" value="2" min="0.5" max="12" step="0.5" inputmode="decimal" oninput="calculate()">
+          <p class="hint-text">dalla stesura</p>
+        </div>
+      </div>
+      <p class="hint-text">Le pieghe si fanno ogni 30 min dopo l'impasto. La divisione in panetti influisce leggermente sulla dose di lievito.</p>
+    </div>
+
+    <!-- WARNINGS -->
+    <div id="warningsArea"></div>
+
+    <!-- RESULTS -->
+    <div id="resultsSection">
+      <div class="card" style="background:transparent;box-shadow:none;padding:0">
+        <div class="card-title" style="padding-left:0.2rem">📊 Ingredienti</div>
+        <div id="pfResultsArea"></div>
+        <div class="results-grid" id="resultsGrid"></div>
+        <div class="summary-bar" id="summaryBar"></div>
+        <div id="trayWeightsArea"></div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="card" id="scheduleCard">
+      <div class="card-title">📋 Pianificazione passo-passo</div>
+      <div class="schedule" id="scheduleTimeline"></div>
+    </div>
+  </main>
+
+  <footer class="footer"><p>Pizza Calculator — Fatto con ❤️ e 🍕</p></footer>
+
+<script>
+// ===== FLOUR DATABASE =====
+const FLOUR_DB = [
+  { id:'generic_00', brand:'Generica', name:'Tipo 00', w:220, protein:11, type:'00' },
+  { id:'generic_0', brand:'Generica', name:'Tipo 0', w:190, protein:10.5, type:'0' },
+  { id:'generic_1', brand:'Generica', name:'Tipo 1', w:200, protein:11, type:'1' },
+  { id:'generic_int', brand:'Generica', name:'Integrale', w:170, protein:12, type:'int' },
+  { id:'generic_man', brand:'Generica', name:'Manitoba', w:370, protein:14.5, type:'00' },
+  { id:'generic_semola', brand:'Generica', name:'Semola rimacinata', w:180, protein:12.5, type:'semola' },
+  // Caputo
+  { id:'caputo_pizzeria', brand:'Caputo', name:'Pizzeria', w:260, protein:12.5, type:'00' },
+  { id:'caputo_nuvola', brand:'Caputo', name:'Nuvola', w:310, protein:13.5, type:'00' },
+  { id:'caputo_saccorosso', brand:'Caputo', name:'Saccorosso (Chef)', w:260, protein:12.5, type:'00' },
+  { id:'caputo_cuoco', brand:'Caputo', name:'Cuoco', w:300, protein:13, type:'00' },
+  { id:'caputo_manitoba', brand:'Caputo', name:'Manitoba Oro', w:370, protein:15, type:'00' },
+  { id:'caputo_classica', brand:'Caputo', name:'Classica', w:220, protein:11.5, type:'00' },
+  { id:'caputo_fior', brand:'Caputo', name:'Fior di Pizza', w:300, protein:13, type:'00' },
+  // Le 5 Stagioni
+  { id:'5s_pizzeria', brand:'Le 5 Stagioni', name:'Pizzeria', w:260, protein:12, type:'00' },
+  { id:'5s_superiore', brand:'Le 5 Stagioni', name:'Superiore', w:320, protein:13, type:'00' },
+  { id:'5s_manitoba', brand:'Le 5 Stagioni', name:'Manitoba', w:380, protein:15, type:'00' },
+  { id:'5s_integrale', brand:'Le 5 Stagioni', name:'Buona Terra Integrale', w:210, protein:12.5, type:'int' },
+  // Dallagiovanna
+  { id:'dg_classica', brand:'Dallagiovanna', name:'Classica', w:260, protein:12, type:'00' },
+  { id:'dg_superiorw', brand:'Dallagiovanna', name:'SuperiorW', w:320, protein:13.5, type:'00' },
+  { id:'dg_manitoba', brand:'Dallagiovanna', name:'Manitoba', w:390, protein:15.5, type:'00' },
+  { id:'dg_uniqua_blu', brand:'Dallagiovanna', name:'Uniqua Blu', w:320, protein:13, type:'1' },
+  // Spadoni
+  { id:'sp_napoletana', brand:'Spadoni', name:'Napoletana', w:280, protein:12.5, type:'00' },
+  { id:'sp_manitoba', brand:'Spadoni', name:'Manitoba', w:350, protein:14.5, type:'00' },
+  { id:'sp_00pizza', brand:'Spadoni', name:'00 per Pizza', w:240, protein:12, type:'00' },
+  // Grassi
+  { id:'gr_260', brand:'Grassi', name:'W260', w:260, protein:12, type:'00' },
+  { id:'gr_320', brand:'Grassi', name:'W320', w:320, protein:13, type:'00' },
+  // Coop / Supermercato
+  { id:'coop_00', brand:'Coop', name:'Tipo 00', w:180, protein:10.5, type:'00' },
+  { id:'barilla_00', brand:'Barilla', name:'Tipo 00', w:180, protein:11, type:'00' },
+];
+
+// W → hydration suggestion
+function wToHydration(w) {
+  if (w <= 150) return { min:50, max:58, ideal:55 };
+  if (w <= 200) return { min:55, max:62, ideal:58 };
+  if (w <= 240) return { min:58, max:65, ideal:62 };
+  if (w <= 280) return { min:60, max:68, ideal:65 };
+  if (w <= 320) return { min:63, max:72, ideal:68 };
+  if (w <= 370) return { min:68, max:78, ideal:72 };
+  return { min:70, max:85, ideal:78 };
+}
+
+function estimateW(protein, flourType) {
+  let base;
+  switch (flourType) {
+    case '00': base = protein * 22 - 20; break;
+    case '0':  base = protein * 21 - 25; break;
+    case '1':  base = protein * 20 - 20; break;
+    case '2':  base = protein * 19 - 15; break;
+    case 'int': base = protein * 17 - 10; break;
+    case 'semola': base = protein * 16; break;
+    default:   base = protein * 21 - 20;
+  }
+  return Math.round(Math.max(90, Math.min(450, base)));
+}
+
+function wDescription(w) {
+  if (w < 170) return 'Debole — biscotti, grissini';
+  if (w < 230) return 'Media — pizza sottile, focaccia';
+  if (w < 290) return 'Medio-forte — pizza classica, napoletana';
+  if (w < 350) return 'Forte — lunga lievitazione, alta idr.';
+  return 'Molto forte (Manitoba) — panettone, alta idr.';
+}
+
+// ===== TRAY/YEAST CONSTANTS =====
+const TRAY_OPTIONS = [
+  { value:'round28', label:'⭕ Rotonda Ø28cm', area: Math.PI*14*14 },
+  { value:'round32', label:'⭕ Rotonda Ø32cm', area: Math.PI*16*16 },
+  { value:'round36', label:'⭕ Rotonda Ø36cm', area: Math.PI*18*18 },
+  { value:'rect30x40', label:'▭ Rettangolare 30×40', area: 30*40 },
+  { value:'rect40x60', label:'▭ Rettangolare 40×60', area: 40*60 },
+  { value:'custom_round', label:'✏️ Rotonda custom', area: 0 },
+  { value:'custom_rect',  label:'✏️ Rettangolare custom', area: 0 }
+];
+
+const YEAST_CURVE = [
+  [1,3.0],[2,1.8],[3,1.2],[4,0.85],[5,0.6],[6,0.45],
+  [8,0.3],[10,0.22],[12,0.16],[16,0.1],[20,0.07],
+  [24,0.055],[30,0.04],[40,0.03],[60,0.02]
+];
+
+const DAYS_IT = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+// ===== STATE =====
+let currentMode = 'flour';
+let prefermentType = 'none';
+let flourMode = 'brand';
+let wManualMode = 'yes';
+let currentW = null;
+let trayIdCounter = 1;
+let trays = [{ id: 1, preset: 'round32', dim1: 32, dim2: 40 }];
+let blendIdCounter = 1;
+let blendFlours = [{ id: 1, flourId: 'caputo_pizzeria', pct: 100 }];
+let flourPanelOpen = false;
+let manualStrategy = false;
+
+// ===== INIT =====
+function init() {
+  setDefaultTimes();
+  populateFlourBrand();
+  renderTrays();
+  renderBlend();
+  updateSliderProgress('hydration', 50, 85);
+  updateSliderProgress('saltPct', 1.5, 4);
+  updateSliderProgress('pfPct', 15, 50);
+  calculate();
+}
+
+function setDefaultTimes() {
+  const now = new Date();
+  const start = roundToQuarter(now);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate()+1);
+  tomorrow.setHours(19,0,0,0);
+  document.getElementById('startTime').value = formatDTLocal(start);
+  document.getElementById('stretchTime').value = formatDTLocal(tomorrow);
+}
+
+function formatDTLocal(d) {
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function roundToQuarter(d) {
+  const ms = 15*60*1000;
+  return new Date(Math.ceil(d.getTime()/ms)*ms);
+}
+
+// ===== MODE =====
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('flourMode').classList.toggle('active', mode === 'flour');
+  document.getElementById('trayMode').classList.toggle('active', mode === 'tray');
+  calculate();
+}
+
+// ===== FLOUR PANEL =====
+function toggleFlourPanel() {
+  flourPanelOpen = !flourPanelOpen;
+  document.getElementById('flourPanel').classList.toggle('open', flourPanelOpen);
+  document.getElementById('flourChevron').classList.toggle('open', flourPanelOpen);
+}
+
+function switchFlourMode(mode) {
+  flourMode = mode;
+  document.querySelectorAll('[data-fm]').forEach(t => t.classList.toggle('active', t.dataset.fm === mode));
+  document.getElementById('flourBrandMode').style.display = mode === 'brand' ? '' : 'none';
+  document.getElementById('flourBlendMode').style.display = mode === 'blend' ? '' : 'none';
+  document.getElementById('flourManualMode').style.display = mode === 'manual' ? '' : 'none';
+  updateWFromCurrentMode();
+}
+
+function switchWMode(mode) {
+  wManualMode = mode;
+  document.querySelectorAll('[data-wm]').forEach(t => t.classList.toggle('active', t.dataset.wm === mode));
+  document.getElementById('wKnownMode').style.display = mode === 'yes' ? '' : 'none';
+  document.getElementById('wEstimateMode').style.display = mode === 'no' ? '' : 'none';
+  updateWFromCurrentMode();
+}
+
+// ===== BRAND MODE =====
+function populateFlourBrand() {
+  const sel = document.getElementById('flourBrand');
+  sel.innerHTML = '<option value="">— Seleziona farina —</option>';
+  let lastBrand = '';
+  FLOUR_DB.forEach(f => {
+    if (f.brand !== lastBrand) {
+      if (lastBrand) sel.innerHTML += '</optgroup>';
+      sel.innerHTML += `<optgroup label="${f.brand}">`;
+      lastBrand = f.brand;
+    }
+    sel.innerHTML += `<option value="${f.id}">${f.name} — W${f.w}</option>`;
+  });
+  sel.innerHTML += '</optgroup>';
+}
+
+function onFlourBrandChange() {
+  const id = document.getElementById('flourBrand').value;
+  const f = FLOUR_DB.find(x => x.id === id);
+  const info = document.getElementById('brandInfo');
+  if (f) {
+    info.innerHTML = `<div class="flour-suggestion">
+      <span class="w-badge">W${f.w}</span>
+      <span class="label">Proteine ~${f.protein}% · ${wDescription(f.w)}</span>
+    </div>`;
+    currentW = f.w;
+  } else {
+    info.innerHTML = '';
+    currentW = null;
+  }
+  updateWSummary();
+  calculate();
+}
+
+// ===== BLEND MODE =====
+function renderBlend() {
+  const list = document.getElementById('blendList');
+  list.innerHTML = blendFlours.map((bf, i) => {
+    const opts = FLOUR_DB.map(f =>
+      `<option value="${f.id}" ${bf.flourId===f.id?'selected':''}>${f.brand} ${f.name} (W${f.w})</option>`
+    ).join('');
+    return `<div class="flour-item">
+      <div class="flour-item-header">
+        <span class="flour-item-title">Farina ${i+1}</span>
+        ${blendFlours.length>1?`<button class="flour-remove-btn" onclick="removeBlendFlour(${bf.id})">&times;</button>`:''}
+      </div>
+      <div class="flour-item-row">
+        <select onchange="onBlendFlourSelect(${bf.id},this.value)" style="font-size:0.85rem">${opts}</select>
+        <input type="number" class="flour-pct-input" value="${bf.pct}" min="5" max="100" step="5"
+               inputmode="numeric" onchange="onBlendPctChange(${bf.id},this.value)" style="width:65px">
+      </div>
+      <p class="hint-text" style="text-align:right">${bf.pct}% del totale</p>
+    </div>`;
+  }).join('');
+  updateBlendResult();
+}
+
+function addBlendFlour() {
+  blendIdCounter++;
+  blendFlours.push({ id: blendIdCounter, flourId: 'generic_man', pct: 30 });
+  rebalanceBlend(blendIdCounter);
+  renderBlend();
+}
+
+function removeBlendFlour(id) {
+  blendFlours = blendFlours.filter(bf => bf.id !== id);
+  rebalanceBlend(null);
+  renderBlend();
+}
+
+function onBlendFlourSelect(id, flourId) {
+  const bf = blendFlours.find(x => x.id === id);
+  if (bf) bf.flourId = flourId;
+  renderBlend();
+}
+
+function onBlendPctChange(id, val) {
+  const bf = blendFlours.find(x => x.id === id);
+  if (bf) bf.pct = Math.max(5, Math.min(100, parseInt(val)||50));
+  rebalanceBlend(id);
+  renderBlend();
+}
+
+function rebalanceBlend(changedId) {
+  if (blendFlours.length === 1) { blendFlours[0].pct = 100; return; }
+  const others = blendFlours.filter(bf => bf.id !== changedId);
+  const changed = blendFlours.find(bf => bf.id === changedId);
+  if (changed && others.length > 0) {
+    const remaining = 100 - changed.pct;
+    const otherTotal = others.reduce((s,bf) => s+bf.pct, 0);
+    if (otherTotal > 0) {
+      others.forEach(bf => bf.pct = Math.max(5, Math.round(bf.pct / otherTotal * remaining)));
+    } else {
+      const each = Math.round(remaining / others.length);
+      others.forEach(bf => bf.pct = each);
+    }
+  }
+}
+
+function updateBlendResult() {
+  let totalW = 0, totalProt = 0, totalPct = 0;
+  blendFlours.forEach(bf => {
+    const f = FLOUR_DB.find(x => x.id === bf.flourId);
+    if (f) { totalW += f.w * bf.pct; totalProt += f.protein * bf.pct; totalPct += bf.pct; }
+  });
+  const avgW = totalPct > 0 ? Math.round(totalW / totalPct) : 0;
+  const avgProt = totalPct > 0 ? (totalProt / totalPct).toFixed(1) : 0;
+  const res = document.getElementById('blendResult');
+  if (avgW > 0) {
+    currentW = avgW;
+    res.innerHTML = `<div class="flour-suggestion">
+      <span class="w-result-badge">W${avgW}</span>
+      <span class="label">Proteine ~${avgProt}% · ${wDescription(avgW)}</span>
+    </div>`;
+  } else { res.innerHTML = ''; currentW = null; }
+  updateWSummary();
+  calculate();
+}
+
+// ===== MANUAL MODE =====
+function onManualWChange() {
+  currentW = parseInt(document.getElementById('manualW').value) || null;
+  updateWSummary();
+  calculate();
+}
+
+function onProteinChange() {
+  const protein = parseFloat(document.getElementById('flourProtein').value) || 11;
+  const type = document.getElementById('flourTypeEst').value;
+  const w = estimateW(protein, type);
+  currentW = w;
+  document.getElementById('wEstimateResult').innerHTML =
+    `<div class="flour-suggestion"><span class="w-result-badge">≈ W${w}</span><span class="label">${wDescription(w)}</span></div>`;
+  updateWSummary();
+  calculate();
+}
+
+function updateWFromCurrentMode() {
+  if (flourMode === 'brand') onFlourBrandChange();
+  else if (flourMode === 'blend') updateBlendResult();
+  else if (flourMode === 'manual') {
+    if (wManualMode === 'yes') onManualWChange();
+    else onProteinChange();
+  }
+}
+
+function updateWSummary() {
+  const el = document.getElementById('wSummary');
+  const hintEl = document.getElementById('hydrationHint');
+  if (currentW && flourPanelOpen) {
+    const hyd = wToHydration(currentW);
+    el.innerHTML = `<div class="flour-suggestion" style="border-left-color:var(--primary)">
+      <span class="w-result-badge">W${currentW}</span>
+      <span class="label" style="color:var(--primary)">Idratazione consigliata: ${hyd.min}–${hyd.max}% (ideale ${hyd.ideal}%)</span>
+    </div>`;
+    const curHyd = parseInt(document.getElementById('hydration').value);
+    if (curHyd < hyd.min - 3) {
+      hintEl.innerHTML = `⚠️ Idratazione bassa per W${currentW} — consigliata ${hyd.min}–${hyd.max}%`;
+      hintEl.className = 'warning-text';
+    } else if (curHyd > hyd.max + 3) {
+      hintEl.innerHTML = `⚠️ Idratazione alta per W${currentW} — consigliata ${hyd.min}–${hyd.max}%`;
+      hintEl.className = 'warning-text';
+    } else {
+      hintEl.innerHTML = `✓ W${currentW} · Consigliata ${hyd.min}–${hyd.max}%`;
+      hintEl.className = 'success-text';
+    }
+  } else {
+    el.innerHTML = '';
+    hintEl.innerHTML = '';
+    hintEl.className = 'hint-text';
+  }
+}
+
+// ===== TRAYS =====
+function renderTrays() {
+  const list = document.getElementById('trayList');
+  list.innerHTML = trays.map((t,i) => {
+    const opts = TRAY_OPTIONS.map(o =>
+      `<option value="${o.value}" ${t.preset===o.value?'selected':''}>${o.label}</option>`
+    ).join('');
+    const isCustom = t.preset.startsWith('custom_');
+    const isRect = t.preset === 'custom_rect';
+    return `<div class="tray-item" data-tray-id="${t.id}">
+      <div class="tray-item-header">
+        <span class="tray-item-title">Teglia ${i+1}</span>
+        ${trays.length>1?`<button class="tray-remove-btn" onclick="removeTray(${t.id})">&times;</button>`:''}
+      </div>
+      <select onchange="onTrayPresetChange(${t.id},this.value)" style="font-size:0.88rem">${opts}</select>
+      <div class="tray-custom-dims ${isCustom?'show':''}" id="trayCustom_${t.id}">
+        <div class="inline-inputs" style="margin-top:0.5rem">
+          <div><label class="input-label">${isRect?'Larghezza (cm)':'Diametro (cm)'}</label>
+            <input type="number" value="${t.dim1}" min="10" max="100" inputmode="numeric"
+                   onchange="onTrayDimChange(${t.id},1,this.value)" style="font-size:0.88rem"></div>
+          <div style="${isRect?'':'display:none'}" id="trayDim2_${t.id}">
+            <label class="input-label">Profondità (cm)</label>
+            <input type="number" value="${t.dim2}" min="10" max="100" inputmode="numeric"
+                   onchange="onTrayDimChange(${t.id},2,this.value)" style="font-size:0.88rem"></div>
+        </div>
+      </div>
+      <div class="tray-dough-badge" id="trayDough_${t.id}">—</div>
+    </div>`;
+  }).join('');
+}
+
+function addTray() { trayIdCounter++; trays.push({ id: trayIdCounter, preset: 'round32', dim1: 32, dim2: 40 }); renderTrays(); calculate(); }
+function removeTray(id) { trays = trays.filter(t => t.id !== id); renderTrays(); calculate(); }
+function onTrayPresetChange(id, val) { const t = trays.find(x => x.id === id); if (t) t.preset = val; renderTrays(); calculate(); }
+function onTrayDimChange(id, dim, val) { const t = trays.find(x => x.id === id); if (t) { if (dim===1) t.dim1 = parseFloat(val)||0; else t.dim2 = parseFloat(val)||0; } calculate(); }
+function getTrayArea(t) {
+  const p = TRAY_OPTIONS.find(o => o.value === t.preset);
+  if (p && p.area > 0) return p.area;
+  if (t.preset === 'custom_round') return Math.PI * Math.pow((t.dim1||30)/2, 2);
+  if (t.preset === 'custom_rect') return (t.dim1||30) * (t.dim2||40);
+  return Math.PI * 16 * 16;
+}
+
+// ===== PRE-FERMENT =====
+function switchPreferment(type) {
+  prefermentType = type;
+  document.querySelectorAll('[data-pf]').forEach(t => t.classList.toggle('active', t.dataset.pf === type));
+  document.getElementById('pfDetails').classList.toggle('show', type !== 'none');
+  if (type === 'poolish') { document.getElementById('pfHours').value = 14; document.getElementById('pfHint').textContent = 'Poolish: idratazione 100% (pari peso farina e acqua). Pronto quando bolle e inizia a collassarsi.'; }
+  else if (type === 'biga') { document.getElementById('pfHours').value = 16; document.getElementById('pfHint').textContent = 'Biga: idratazione ~44%, impasto asciutto. Pronto quando raddoppiato e leggermente convesso.'; }
+  calculate();
+}
+
+// ===== SLIDERS =====
+function onHydrationChange() {
+  document.getElementById('hydrationBadge').textContent = document.getElementById('hydration').value + '%';
+  updateSliderProgress('hydration', 50, 85);
+  updateWSummary();
+  calculate();
+}
+function onSaltChange() { document.getElementById('saltBadge').textContent = document.getElementById('saltPct').value + '%'; updateSliderProgress('saltPct', 1.5, 4); calculate(); }
+function onPfPctChange() { document.getElementById('pfPctBadge').textContent = document.getElementById('pfPct').value + '%'; updateSliderProgress('pfPct', 15, 50); calculate(); }
+function updateSliderProgress(id, min, max) { const el = document.getElementById(id); el.style.setProperty('--progress', ((el.value-min)/(max-min))*100 + '%'); }
+function onTimeChange() { calculate(); }
+function getTotalHours() { const s = new Date(document.getElementById('startTime').value); const e = new Date(document.getElementById('stretchTime').value); if (isNaN(s)||isNaN(e)) return 0; return Math.max(0, (e - s) / 3600000); }
+
+// ===== YEAST =====
+function yeastPctFromEffectiveHours(h) {
+  if (h <= YEAST_CURVE[0][0]) return YEAST_CURVE[0][1];
+  for (let i=0; i<YEAST_CURVE.length-1; i++) {
+    if (h <= YEAST_CURVE[i+1][0]) { const [h1,y1] = YEAST_CURVE[i], [h2,y2] = YEAST_CURVE[i+1]; const t = (h-h1)/(h2-h1); return y1 * Math.pow(y2/y1, t); }
+  }
+  return YEAST_CURVE[YEAST_CURVE.length-1][1];
+}
+
+// ===== SMART FRIDGE STRATEGY =====
+function decideFridgeStrategy(mainDoughHours) {
+  if (mainDoughHours <= 0) return { useFridge:false, roomBefore:0, fridgeHours:0, roomAfter:0, reason:'', title:'' };
+
+  if (mainDoughHours <= 5) {
+    return {
+      useFridge: false,
+      roomBefore: mainDoughHours,
+      fridgeHours: 0,
+      roomAfter: 0,
+      title: 'Tutto a temperatura ambiente',
+      reason: `${mainDoughHours.toFixed(1)}h — tempo breve, il frigo non serve. Lievitazione rapida a temperatura ambiente.`
+    };
+  }
+
+  if (mainDoughHours <= 8) {
+    const roomAfter = Math.min(1.5, mainDoughHours * 0.2);
+    return {
+      useFridge: false,
+      roomBefore: mainDoughHours - roomAfter,
+      fridgeHours: 0,
+      roomAfter,
+      title: 'Tutto a temperatura ambiente',
+      reason: `${mainDoughHours.toFixed(1)}h — gestibile a temp. ambiente. Il frigo sarebbe controproducente con poco tempo.`
+    };
+  }
+
+  if (mainDoughHours <= 14) {
+    const roomBefore = 2;
+    const roomAfter = 2;
+    const fridge = mainDoughHours - roomBefore - roomAfter;
+    return {
+      useFridge: true,
+      roomBefore, fridgeHours: fridge, roomAfter,
+      title: 'Frigo consigliato',
+      reason: `${mainDoughHours.toFixed(1)}h — il frigo controlla la fermentazione e migliora sapore e digeribilità.`
+    };
+  }
+
+  if (mainDoughHours <= 36) {
+    const roomBefore = 1.5;
+    const roomAfter = 2;
+    const fridge = mainDoughHours - roomBefore - roomAfter;
+    return {
+      useFridge: true,
+      roomBefore, fridgeHours: fridge, roomAfter,
+      title: 'Frigo necessario',
+      reason: `${mainDoughHours.toFixed(1)}h — lievitazione lunga, il frigo è fondamentale per evitare sovra-fermentazione.`
+    };
+  }
+
+  // > 36h
+  const roomBefore = 1;
+  const roomAfter = 2.5;
+  const fridge = mainDoughHours - roomBefore - roomAfter;
+  return {
+    useFridge: true,
+    roomBefore, fridgeHours: fridge, roomAfter,
+    title: 'Frigo indispensabile',
+    reason: `${mainDoughHours.toFixed(1)}h — ultra-lunga, il frigo è indispensabile. Ottima digeribilità se gestito bene.`
+  };
+}
+
+function toggleManualStrategy() {
+  manualStrategy = !manualStrategy;
+  const btn = document.getElementById('strategyToggleBtn');
+  const rb = document.getElementById('roomBefore');
+  const ra = document.getElementById('roomAfter');
+  if (manualStrategy) {
+    btn.textContent = '🔄 Automatico';
+    rb.disabled = false; ra.disabled = false;
+    rb.style.background = '#FEFCFA'; ra.style.background = '#FEFCFA';
+  } else {
+    btn.textContent = '✏️ Personalizza';
+    rb.disabled = true; ra.disabled = true;
+    rb.style.background = '#f5f0eb'; ra.style.background = '#f5f0eb';
+  }
+  calculate();
+}
+
+// ===== WARNINGS =====
+function generateWarnings(p) {
+  const w = [];
+
+  // === TIME ===
+  if (p.totalHours > 0 && p.totalHours < 2)
+    w.push({ level:'danger', icon:'⏱️', text:'Tempo troppo corto. Servono almeno 2–3 ore per una lievitazione minima.' });
+  else if (p.totalHours >= 2 && p.totalHours < 4)
+    w.push({ level:'caution', icon:'⏱️', text:'Lievitazione molto rapida. Il risultato potrebbe essere meno digeribile.' });
+
+  // === ROOM TEMP TOO LONG ===
+  if (!p.useFridge && p.mainDoughHours > 10)
+    w.push({ level:'danger', icon:'🌡️', text:`${p.mainDoughHours.toFixed(0)}h a temperatura ambiente senza frigo: l'impasto rischia di sovra-lievitare e collassare.` });
+  else if (!p.useFridge && p.mainDoughHours > 7)
+    w.push({ level:'caution', icon:'🌡️', text:`${p.mainDoughHours.toFixed(0)}h a temperatura ambiente. Con temp. oltre 25°C potrebbe sovra-lievitare.` });
+
+  // === FRIDGE TOO SHORT ===
+  if (p.useFridge && p.fridgeHours > 0 && p.fridgeHours < 4)
+    w.push({ level:'caution', icon:'❄️', text:`Solo ${p.fridgeHours.toFixed(1)}h in frigo: poco utile. Sotto le 6h il frigo non contribuisce molto.` });
+
+  // === ROOM AFTER TOO SHORT ===
+  if (p.useFridge && p.fridgeHours > 2 && p.roomAfter < 1)
+    w.push({ level:'caution', icon:'🌡️', text:`Meno di 1h a temp. ambiente dopo il frigo: l'impasto sarà freddo e rigido da stendere.` });
+
+  // === HYDRATION ===
+  if (p.hydration > 0.78)
+    w.push({ level:'caution', icon:'💧', text:`Idratazione ${Math.round(p.hydration*100)}%: molto alta. Richiede esperienza nella lavorazione e farina forte (W>320).` });
+  if (p.hydration < 0.53)
+    w.push({ level:'caution', icon:'💧', text:`Idratazione ${Math.round(p.hydration*100)}%: molto bassa. L'impasto sarà rigido e poco estensibile.` });
+
+  // === SALT ===
+  if (p.saltPct > 0.035)
+    w.push({ level:'caution', icon:'🧂', text:`Sale al ${(p.saltPct*100).toFixed(1)}%: alto. Rallenta la lievitazione e dà sapore troppo salato.` });
+  if (p.saltPct < 0.02)
+    w.push({ level:'caution', icon:'🧂', text:`Sale al ${(p.saltPct*100).toFixed(1)}%: basso. L'impasto sarà insipido e la maglia glutinica più debole.` });
+
+  // === BALL WEIGHT ===
+  if (p.ballWeight < 120)
+    w.push({ level:'caution', icon:'🔪', text:`Panetto da ~${Math.round(p.ballWeight)}g: molto piccolo, sarà difficile da stendere.` });
+  if (p.ballWeight > 450 && currentMode === 'flour')
+    w.push({ level:'caution', icon:'🔪', text:`Panetto da ~${Math.round(p.ballWeight)}g: molto pesante. Considera di aumentare il numero di panetti.` });
+
+  // === YEAST ===
+  const yPct = (p.yeast / p.flour) * 100;
+  if (p.isDry && yPct > 0.5)
+    w.push({ level:'danger', icon:'📦', text:`Lievito secco al ${yPct.toFixed(2)}%: troppo. Il sapore di lievito sarà dominante e la pizza poco digeribile.` });
+  else if (!p.isDry && yPct > 1.5)
+    w.push({ level:'danger', icon:'🧊', text:`Lievito fresco al ${yPct.toFixed(2)}%: molto alto. La pizza potrebbe avere un sapore sgradevole di lievito.` });
+
+  // === PRE-FERMENT ===
+  if (prefermentType !== 'none') {
+    if (p.pfHoursDuration > 20)
+      w.push({ level:'caution', icon:'🫗', text:`Pre-fermento di ${p.pfHoursDuration}h: molto lungo. Rischia di collassare e diventare acido.` });
+    if (p.pfHoursDuration < 8)
+      w.push({ level:'caution', icon:'🫗', text:`Pre-fermento di ${p.pfHoursDuration}h: breve. Potrebbe non sviluppare abbastanza sapore.` });
+    if (p.mainDoughHours < 3)
+      w.push({ level:'danger', icon:'⏱️', text:'Tempo insufficiente per la lievitazione dopo il pre-fermento. Riduci le ore del pre-fermento o sposta la stesura.' });
+  }
+
+  // === W / HYDRATION MISMATCH ===
+  if (currentW && flourPanelOpen) {
+    if (currentW < 200 && p.hydration > 0.65)
+      w.push({ level:'danger', icon:'🌾', text:`Farina debole (W${currentW}) con idratazione ${Math.round(p.hydration*100)}%: l'impasto non reggerà tutta l'acqua e sarà appiccicoso.` });
+    if (currentW < 250 && p.totalHours > 24)
+      w.push({ level:'caution', icon:'🌾', text:`Farina W${currentW} con ${Math.round(p.totalHours)}h di lievitazione: la maglia glutinica potrebbe degradarsi. Usa una farina più forte.` });
+    if (currentW > 350 && p.totalHours < 8 && prefermentType === 'none')
+      w.push({ level:'caution', icon:'🌾', text:`Farina forte (W${currentW}) con solo ${Math.round(p.totalHours)}h: non sfrutterai il potenziale della farina. Meglio una lievitazione più lunga.` });
+  }
+
+  // === POSITIVE TIP ===
+  if (w.length === 0 && p.totalHours >= 8) {
+    w.push({ level:'tip', icon:'✅', text:'Ottima configurazione! Una lievitazione ben gestita garantisce pizza più digeribile e saporita.' });
+  }
+
+  return w;
+}
+
+function renderWarnings(warnings) {
+  const area = document.getElementById('warningsArea');
+  if (warnings.length === 0) { area.innerHTML = ''; return; }
+  area.innerHTML = warnings.map(w =>
+    `<div class="warning-item ${w.level}"><span class="wi-icon">${w.icon}</span><span>${w.text}</span></div>`
+  ).join('');
+}
+
+// ===== MAIN CALCULATE =====
+function calculate() {
+  const hydration = parseFloat(document.getElementById('hydration').value)/100;
+  const saltPct = parseFloat(document.getElementById('saltPct').value)/100;
+  const isDry = document.getElementById('yeastType').checked;
+  document.getElementById('yeastLabelFresh').classList.toggle('active', !isDry);
+  document.getElementById('yeastLabelDry').classList.toggle('active', isDry);
+
+  const totalHours = getTotalHours();
+  const pfHoursDuration = prefermentType !== 'none' ? (parseFloat(document.getElementById('pfHours').value)||14) : 0;
+  const mainDoughHours = Math.max(0, totalHours - pfHoursDuration);
+
+  // ===== SMART STRATEGY =====
+  const strategy = decideFridgeStrategy(mainDoughHours);
+  let roomBefore, roomAfter, fridgeHours, useFridge;
+
+  if (manualStrategy) {
+    roomBefore = Math.min(parseFloat(document.getElementById('roomBefore').value)||2, mainDoughHours);
+    roomAfter = Math.min(parseFloat(document.getElementById('roomAfter').value)||1.5, Math.max(0, mainDoughHours - roomBefore));
+    fridgeHours = Math.max(0, mainDoughHours - roomBefore - roomAfter);
+    useFridge = fridgeHours > 0.5;
+  } else {
+    roomBefore = strategy.roomBefore;
+    roomAfter = strategy.roomAfter;
+    fridgeHours = strategy.fridgeHours;
+    useFridge = strategy.useFridge;
+    document.getElementById('roomBefore').value = roomBefore.toFixed(1);
+    document.getElementById('roomAfter').value = roomAfter.toFixed(1);
+  }
+  document.getElementById('fridgeHours').value = fridgeHours.toFixed(1);
+
+  // Strategy badge
+  const badge = document.getElementById('strategyBadge');
+  if (totalHours > 0) {
+    const cls = useFridge ? 'fridge' : 'room';
+    const icon = useFridge ? '❄️' : '🌡️';
+    badge.innerHTML = `<div class="strategy-badge ${cls}">
+      <span class="sb-icon">${icon}</span>
+      <strong>${strategy.title}</strong>
+      <span class="sb-reason">${strategy.reason}</span>
+    </div>`;
+    // Show/hide fridge column
+    document.getElementById('fridgeColumn').style.display = useFridge || manualStrategy ? '' : 'none';
+    document.getElementById('strategyBreakdown').className = (useFridge || manualStrategy) ? 'inline-inputs three' : 'inline-inputs';
+  } else {
+    badge.innerHTML = '';
+  }
+
+  const effectiveHours = roomBefore + roomAfter + fridgeHours / 3.5;
+  const ballDivBefore = parseFloat(document.getElementById('ballDivBefore').value)||2;
+  const ballFactor = 1 - (Math.min(ballDivBefore, 6) / 60);
+
+  let yeastFreshPct = yeastPctFromEffectiveHours(effectiveHours) * ballFactor / 100;
+  if (isDry) yeastFreshPct /= 3;
+
+  // Time hints
+  const hoursHint = document.getElementById('totalHoursHint');
+  if (totalHours > 0) {
+    const hh = Math.floor(totalHours); const mm = Math.round((totalHours-hh)*60);
+    let txt = `Tempo totale: ${hh}h${mm>0?' '+mm+'min':''}`;
+    if (prefermentType !== 'none') txt += ` (${pfHoursDuration}h pre-fermento + ${mainDoughHours.toFixed(1)}h impasto)`;
+    hoursHint.textContent = txt;
+  } else { hoursHint.textContent = '⚠️ Imposta gli orari'; }
+
+  // Flour
+  let flour, numPieces, trayDoughWeights = [];
+  if (currentMode === 'flour') {
+    flour = parseFloat(document.getElementById('flourAmount').value)||1000;
+    numPieces = parseInt(document.getElementById('numBalls').value)||4;
+  } else {
+    const styleFactor = parseFloat(document.getElementById('pizzaStyle').value)||0.65;
+    let totalDoughNeeded = 0;
+    trayDoughWeights = trays.map((t,i) => { const a = getTrayArea(t); const d = a * styleFactor; totalDoughNeeded += d; return { label:`Teglia ${i+1}`, weight:d }; });
+    numPieces = trays.length;
+    flour = totalDoughNeeded / (1 + hydration + saltPct + yeastFreshPct);
+  }
+
+  const water = flour * hydration;
+  const salt = flour * saltPct;
+  const yeast = flour * yeastFreshPct;
+
+  let pf = null;
+  if (prefermentType !== 'none') {
+    const pfPct = parseFloat(document.getElementById('pfPct').value)/100;
+    const pfFlour = flour * pfPct;
+    const pfHydration = prefermentType === 'poolish' ? 1.0 : 0.44;
+    const pfWater = pfFlour * pfHydration;
+    const pfYeastFresh = pfFlour * yeastPctFromEffectiveHours(pfHoursDuration) / 100;
+    const pfYeast = isDry ? pfYeastFresh / 3 : pfYeastFresh;
+    pf = { type: prefermentType, flour: pfFlour, water: pfWater, yeast: pfYeast,
+      mainFlour: flour - pfFlour, mainWater: Math.max(0, water - pfWater), mainSalt: salt, mainYeast: Math.max(0, yeast - pfYeast) };
+  }
+
+  const totalDough = flour + water + salt + yeast;
+  const ballWeight = totalDough / numPieces;
+
+  if (currentMode === 'flour') {
+    document.getElementById('ballWeightHint').textContent = `Peso per panetto: ~${Math.round(ballWeight)}g`;
+  } else {
+    document.getElementById('trayFlourHint').textContent = `Farina necessaria: ~${Math.round(flour)}g`;
+    trays.forEach((t,i) => { const el = document.getElementById('trayDough_'+t.id); if (el && trayDoughWeights[i]) el.textContent = `~${Math.round(trayDoughWeights[i].weight)}g impasto`; });
+  }
+
+  // Warnings
+  renderWarnings(generateWarnings({
+    flour, water, salt, yeast, totalDough, numPieces, isDry, hydration, saltPct,
+    totalHours, mainDoughHours, effectiveHours, roomBefore, fridgeHours, roomAfter,
+    useFridge, ballWeight, pfHoursDuration
+  }));
+
+  renderResults(flour, water, salt, yeast, totalDough, numPieces, isDry, pf, trayDoughWeights);
+  renderSchedule(flour, water, salt, yeast, totalDough, numPieces, isDry, pf, trayDoughWeights, totalHours, pfHoursDuration, mainDoughHours, roomBefore, fridgeHours, roomAfter, ballDivBefore, useFridge);
+}
+
+// ===== RENDER RESULTS =====
+function renderResults(flour, water, salt, yeast, totalDough, numPieces, isDry, pf, trayDoughWeights) {
+  const fmt = n => n < 0.1 ? n.toFixed(3) : n < 1 ? n.toFixed(2) : n < 10 ? n.toFixed(1) : Math.round(n).toString();
+  const yeastLabel = isDry ? 'Lievito secco' : 'Lievito fresco';
+  const yeastIcon = isDry ? '📦' : '🧊';
+
+  const pfArea = document.getElementById('pfResultsArea');
+  if (pf) {
+    pfArea.innerHTML = `
+      <div class="pf-result-section"><div class="pf-result-title">${pf.type==='poolish'?'🫗 Poolish':'🍞 Biga'} (pre-fermento)</div>
+        <div class="pf-result-row"><span class="label">🌾 Farina</span><span class="value">${fmt(pf.flour)}g</span></div>
+        <div class="pf-result-row"><span class="label">💧 Acqua</span><span class="value">${fmt(pf.water)}g</span></div>
+        <div class="pf-result-row"><span class="label">${yeastIcon} ${yeastLabel}</span><span class="value">${fmt(pf.yeast)}g</span></div></div>
+      <div class="pf-result-section" style="margin-top:0.5rem"><div class="pf-result-title">🤲 Impasto principale (aggiungi al ${pf.type})</div>
+        <div class="pf-result-row"><span class="label">🌾 Farina</span><span class="value">${fmt(pf.mainFlour)}g</span></div>
+        <div class="pf-result-row"><span class="label">💧 Acqua</span><span class="value">${fmt(pf.mainWater)}g</span></div>
+        <div class="pf-result-row"><span class="label">🧂 Sale</span><span class="value">${fmt(pf.mainSalt)}g</span></div>
+        ${pf.mainYeast>0.001?`<div class="pf-result-row"><span class="label">${yeastIcon} ${yeastLabel}</span><span class="value">${fmt(pf.mainYeast)}g</span></div>`:''}</div>`;
+  } else { pfArea.innerHTML = ''; }
+
+  document.getElementById('resultsGrid').innerHTML = `
+    <div class="result-card flour"><div class="result-icon">🌾</div><div class="result-name">Farina totale</div><div class="result-value">${fmt(flour)}</div><div class="result-unit">grammi</div></div>
+    <div class="result-card water"><div class="result-icon">💧</div><div class="result-name">Acqua totale</div><div class="result-value">${fmt(water)}</div><div class="result-unit">grammi</div></div>
+    <div class="result-card salt"><div class="result-icon">🧂</div><div class="result-name">Sale</div><div class="result-value">${fmt(salt)}</div><div class="result-unit">grammi</div></div>
+    <div class="result-card yeast"><div class="result-icon">${yeastIcon}</div><div class="result-name">${yeastLabel}</div><div class="result-value">${fmt(yeast)}</div><div class="result-unit">grammi</div></div>`;
+
+  const countLabel = currentMode === 'tray' ? 'Teglie' : 'Panetti';
+  const weightLabel = currentMode === 'tray' ? 'Media teglia' : 'Per panetto';
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="summary-item"><div class="summary-label">Totale</div><div class="summary-value">${Math.round(totalDough)}g</div></div>
+    <div class="summary-item"><div class="summary-label">${countLabel}</div><div class="summary-value">${numPieces}</div></div>
+    <div class="summary-item"><div class="summary-label">${weightLabel}</div><div class="summary-value">${Math.round(totalDough/numPieces)}g</div></div>`;
+
+  const twArea = document.getElementById('trayWeightsArea');
+  if (currentMode === 'tray' && trayDoughWeights.length > 1) {
+    twArea.innerHTML = '<div class="tray-weights">' + trayDoughWeights.map(tw =>
+      `<div class="tray-weight-item"><span class="tray-weight-name">${tw.label}</span><span class="tray-weight-value">${Math.round(tw.weight)}g</span></div>`
+    ).join('') + '</div>';
+  } else { twArea.innerHTML = ''; }
+}
+
+// ===== RENDER SCHEDULE =====
+function renderSchedule(flour, water, salt, yeast, totalDough, numPieces, isDry, pf, trayDoughWeights, totalHours, pfHoursDuration, mainDoughHours, roomBefore, fridgeHours, roomAfter, ballDivBefore, useFridge) {
+  if (totalHours < 1) { document.getElementById('scheduleTimeline').innerHTML = '<p class="hint-text">Imposta gli orari per vedere la pianificazione.</p>'; return; }
+
+  const fmt = n => n < 0.1 ? n.toFixed(3) : n < 1 ? n.toFixed(2) : n < 10 ? n.toFixed(1) : Math.round(n).toString();
+  const yeastLabel = isDry ? 'lievito secco' : 'lievito fresco';
+  const startMs = new Date(document.getElementById('startTime').value).getTime();
+  const stretchMs = new Date(document.getElementById('stretchTime').value).getTime();
+  const numFolds = parseInt(document.getElementById('numFolds').value)||0;
+  const steps = [];
+
+  if (pf) {
+    steps.push({ time: startMs, icon: '🫗', title: `Prepara il ${pf.type}`,
+      detail: `${fmt(pf.flour)}g farina + ${fmt(pf.water)}g acqua + ${fmt(pf.yeast)}g ${yeastLabel}\nCopri e lascia a temperatura ambiente.` });
+    const mixTime = startMs + pfHoursDuration * 3600000;
+    let md = `Aggiungi al ${pf.type}: ${fmt(pf.mainFlour)}g farina + ${fmt(pf.mainWater)}g acqua + ${fmt(pf.mainSalt)}g sale`;
+    if (pf.mainYeast > 0.001) md += ` + ${fmt(pf.mainYeast)}g ${yeastLabel}`;
+    md += '\nImpasta fino a ottenere un impasto liscio.';
+    steps.push({ time: mixTime, icon: '🤲', title: 'Impasta con il pre-fermento', detail: md });
+    for (let i=0;i<numFolds;i++) steps.push({ time: mixTime+(i+1)*30*60000, icon:'🔄', title:`Piega ${i+1} di ${numFolds}`, detail:'Stretch & fold: afferra, stira e piega al centro. Ruota 90° e ripeti.' });
+    const afterFolds = mixTime + Math.max((numFolds+1)*30*60000, 60*60000);
+    if (useFridge && fridgeHours > 0.5) {
+      steps.push({ time: afterFolds, icon:'❄️', title:'Metti in frigo', detail:`Copri bene con pellicola. Riposo in frigo ~${fridgeHours.toFixed(1)} ore.` });
+      const outTime = stretchMs - roomAfter * 3600000;
+      const pw = Math.round(totalDough/numPieces), pn = currentMode==='tray'?'porzioni per teglia':'panetti';
+      steps.push({ time: outTime, icon:'🌡️', title:'Tira fuori dal frigo', detail:`Dividi in ${numPieces} ${pn} da ~${pw}g.\nFai attemperare a temperatura ambiente.` });
+    } else {
+      const divTime = stretchMs - ballDivBefore * 3600000;
+      const pw = Math.round(totalDough/numPieces), pn = currentMode==='tray'?'porzioni per teglia':'panetti';
+      steps.push({ time: Math.max(divTime, afterFolds), icon:'🔪', title:'Dividi in '+pn, detail:`${numPieces} ${pn} da ~${pw}g. Lascia lievitare a temp. ambiente fino alla stesura.` });
+    }
+  } else {
+    steps.push({ time: startMs, icon:'🤲', title:'Impasta', detail:`${fmt(flour)}g farina + ${fmt(water)}g acqua + ${fmt(salt)}g sale + ${fmt(yeast)}g ${yeastLabel}\nImpasta fino a impasto liscio ed elastico.` });
+    for (let i=0;i<numFolds;i++) steps.push({ time: startMs+(i+1)*30*60000, icon:'🔄', title:`Piega ${i+1} di ${numFolds}`, detail:'Stretch & fold: afferra, stira e piega al centro. Ruota 90° e ripeti.' });
+    const afterFolds = startMs + Math.max((numFolds+1)*30*60000, 45*60000);
+    if (useFridge && fridgeHours > 0.5) {
+      steps.push({ time: afterFolds, icon:'❄️', title:'Metti in frigo', detail:`Copri bene con pellicola. Riposo in frigo ~${fridgeHours.toFixed(1)} ore.` });
+      const outTime = stretchMs - roomAfter * 3600000;
+      const pw = Math.round(totalDough/numPieces), pn = currentMode==='tray'?'porzioni per teglia':'panetti';
+      steps.push({ time: outTime, icon:'🌡️', title:'Tira fuori dal frigo', detail:`Dividi in ${numPieces} ${pn} da ~${pw}g.\nFai attemperare a temperatura ambiente.` });
+    } else {
+      const divTime = stretchMs - ballDivBefore * 3600000;
+      const pw = Math.round(totalDough/numPieces), pn = currentMode==='tray'?'porzioni per teglia':'panetti';
+      steps.push({ time: Math.max(divTime, afterFolds), icon:'🔪', title:'Dividi in '+pn, detail:`${numPieces} ${pn} da ~${pw}g. Lascia lievitare a temp. ambiente fino alla stesura.` });
+    }
+  }
+
+  steps.push({ time: stretchMs, icon:'🍕', title:'Stendi la pizza!',
+    detail: currentMode==='tray' ? trayDoughWeights.map((tw,i)=>`${tw.label}: ~${Math.round(tw.weight)}g`).join(' · ') : 'Buon appetito! 🎉', highlight:true });
+
+  steps.sort((a,b) => a.time - b.time);
+  let html = '', lastDay = '';
+  steps.forEach((step, idx) => {
+    const d = new Date(step.time);
+    const dayKey = d.toDateString();
+    if (dayKey !== lastDay) { lastDay = dayKey; html += `<div class="schedule-day-divider">${DAYS_IT[d.getDay()]} ${d.getDate()} ${MONTHS_IT[d.getMonth()]}</div>`; }
+    const ts = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const isLast = idx === steps.length - 1;
+    html += `<div class="schedule-step"><div class="schedule-dot-wrap"><div class="schedule-dot ${step.highlight?'highlight':''}"></div>${!isLast?'<div class="schedule-line"></div>':''}</div>
+      <div class="schedule-content"><div class="schedule-time">${ts} — ${step.icon} ${step.title}</div><div class="schedule-detail">${step.detail.replace(/\n/g,'<br>')}</div></div></div>`;
+  });
+  document.getElementById('scheduleTimeline').innerHTML = html;
+}
+
+// ===== PWA =====
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; document.getElementById('installBanner').classList.add('show'); });
+document.getElementById('installBtn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; document.getElementById('installBanner').classList.remove('show'); } });
+document.getElementById('installClose').addEventListener('click', () => document.getElementById('installBanner').classList.remove('show'));
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+init();
+</script>
+</body>
+</html>

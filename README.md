@@ -1,0 +1,78 @@
+# 🍕 Pizza Calculator
+
+Calcolatore di dosi per l'impasto della pizza perfetta. Web app statica, leggera, installabile come PWA.
+
+## Funzionalità
+
+- **Modalità Farina**: inserisci i grammi di farina e il numero di panetti
+- **Modalità Teglie**: scegli formato e numero di teglie, calcola automaticamente la farina necessaria
+- **Idratazione regolabile** (50-85%)
+- **Sale regolabile** (1.5-4%)
+- **Tempi di lievitazione** preimpostati (da 2h a 72h in frigo)
+- **Lievito fresco o secco** con conversione automatica
+- **PWA**: installabile su smartphone come app nativa
+- **Offline**: funziona anche senza connessione
+
+---
+
+## 🚀 Hosting gratuito — 3 opzioni
+
+### Opzione 1: GitHub Pages (consigliata)
+
+1. Crea un repository su [github.com](https://github.com/new)
+2. Carica tutti i file (`index.html`, `manifest.json`, `sw.js`)
+3. Vai in **Settings → Pages**
+4. Sotto "Source" seleziona **Deploy from a branch** → branch `main`, cartella `/ (root)`
+5. Clicca **Save**
+6. Dopo qualche minuto il sito sarà live su: `https://tuousername.github.io/nome-repo/`
+
+```bash
+# Oppure da terminale:
+cd PizzaCalculator
+git init
+git add .
+git commit -m "Pizza Calculator v1"
+git branch -M main
+git remote add origin https://github.com/TUOUSERNAME/pizza-calculator.git
+git push -u origin main
+```
+
+### Opzione 2: Netlify
+
+1. Vai su [app.netlify.com](https://app.netlify.com)
+2. Trascina la cartella `PizzaCalculator` nella pagina
+3. Il sito sarà live istantaneamente con un URL tipo `https://random-name.netlify.app`
+4. Puoi personalizzare il nome del sito dalle impostazioni
+
+### Opzione 3: Vercel
+
+1. Vai su [vercel.com](https://vercel.com)
+2. Collega il tuo repository GitHub
+3. Deploy automatico ad ogni push
+
+---
+
+## 📱 Installazione su smartphone
+
+Una volta aperto il link del sito:
+
+- **Android**: tocca il banner "Installa l'app" oppure dal menu ⋮ → "Aggiungi a schermata Home"
+- **iOS**: tocca il pulsante di condivisione → "Aggiungi a schermata Home"
+
+---
+
+## 📁 Struttura
+
+```
+PizzaCalculator/
+├── index.html      # App completa (HTML + CSS + JS)
+├── manifest.json   # Manifest PWA
+├── sw.js           # Service Worker per cache offline
+└── README.md       # Questo file
+```
+
+---
+
+## Licenza
+
+MIT — Usa liberamente!
