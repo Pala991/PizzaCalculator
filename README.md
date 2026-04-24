@@ -4,12 +4,14 @@ Calcolatore di dosi per l'impasto della pizza perfetta. Web app statica, leggera
 
 ## Funzionalità
 
-- **Modalità Farina**: inserisci i grammi di farina e il numero di panetti
+- **Modalità Farina**: inserisci i grammi di farina e scegli il tipo di impasto; il numero panetti viene calcolato automaticamente
+- **Profili impasto in Da Farina**: Napoletana, Classica, Pinsa/Pinza, Teglia, Pala e **Custom** con peso panetto automatico
 - **Modalità Teglie**: scegli formato e numero di teglie, calcola automaticamente la farina necessaria
 - **Idratazione regolabile** (50-85%)
 - **Sale regolabile** (1.5-4%)
 - **Tempi di lievitazione** preimpostati (da 2h a 72h in frigo)
 - **Lievito fresco o secco** con conversione automatica
+- **Condivisione pianificazione**: inoltro rapido con Web Share, bottone WhatsApp e copia testo per app Note/Promemoria
 - **PWA**: installabile su smartphone come app nativa
 - **Offline**: funziona anche senza connessione
 
@@ -58,6 +60,20 @@ Una volta aperto il link del sito:
 
 - **Android**: tocca il banner "Installa l'app" oppure dal menu ⋮ → "Aggiungi a schermata Home"
 - **iOS**: tocca il pulsante di condivisione → "Aggiungi a schermata Home"
+
+---
+
+## 🧠 Cosa può mancare (consigli pratici)
+
+Per far crescere l'app in modo utile, queste sono le priorità consigliate:
+
+1. **Salvataggio ricette e preset locali**: salva configurazioni preferite (es. "Napoletana weekend", "Teglia 72h") in LocalStorage.
+2. **Storico impasti con note risultato**: aggiungi voto finale, foto e commento per confrontare le prove nel tempo.
+3. **Scalatura ingredienti per ingredienti disponibili**: esempio, "ho solo 4g di lievito, quanta farina/acqua posso usare?".
+4. **Modalità multi-forno**: consigli tempi e temperature in base a forno domestico, elettrico professionale o pizza steel.
+5. **Export avanzato**: PDF stampabile della pianificazione e file testo/JSON per backup o condivisione.
+6. **Notifiche intelligenti**: promemoria locali per pieghe, uscita frigo e stesura.
+7. **Gestione temperatura ambiente**: input temperatura cucina e adattamento automatico del lievito più realistico.
 
 ---
 

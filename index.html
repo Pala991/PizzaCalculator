@@ -46,7 +46,7 @@
     select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23E85D04' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;padding-right:2.5rem}
     input[type="number"]:focus,select:focus,input[type="datetime-local"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,93,4,0.15)}
     input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-    input[type="number"]{-moz-appearance:textfield}
+    input[type="number"]{appearance:textfield;-moz-appearance:textfield}
 
     input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:linear-gradient(to right,var(--primary) 0%,var(--primary) var(--progress,50%),#EDE0D4 var(--progress,50%),#EDE0D4 100%);outline:none;transition:var(--transition)}
     input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:white;border:3px solid var(--primary);box-shadow:0 2px 10px rgba(232,93,4,0.3);cursor:pointer;transition:var(--transition)}
@@ -72,6 +72,7 @@
     .success-text{font-size:0.73rem;color:var(--success);font-weight:700;margin-top:0.25rem}
     .warning-text{font-size:0.73rem;color:#DC2F02;font-weight:700;margin-top:0.25rem;padding:0.35rem 0.6rem;background:rgba(220,47,2,0.07);border-radius:8px}
     .info-box{font-size:0.75rem;color:var(--text-light);font-weight:600;padding:0.5rem 0.7rem;background:rgba(232,93,4,0.05);border-radius:8px;border-left:3px solid var(--primary-light);margin-top:0.5rem;line-height:1.5}
+    .readonly-input{background:#f5f0eb!important;color:var(--text-muted)!important;cursor:not-allowed}
 
     /* WARNINGS */
     .warning-item{display:flex;align-items:flex-start;gap:0.5rem;padding:0.5rem 0.7rem;margin-bottom:0.4rem;border-radius:8px;font-size:0.76rem;font-weight:600;line-height:1.45;animation:fadeIn 0.2s ease}
@@ -135,6 +136,14 @@
     .schedule-title{font-size:0.88rem;font-weight:700;color:var(--text);margin-top:0.1rem}
     .schedule-detail{font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-top:0.1rem;line-height:1.4}
     .schedule-day-divider{font-size:0.7rem;font-weight:800;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.05em;padding:0.3rem 0 0.5rem;margin-top:0.2rem}
+    .share-actions{display:flex;flex-wrap:wrap;gap:0.45rem;margin-bottom:0.55rem}
+    .share-btn{flex:1;min-width:125px;border:2px solid var(--border);background:#FEFCFA;color:var(--text);font-family:inherit;font-size:0.78rem;font-weight:800;padding:0.55rem 0.6rem;border-radius:999px;cursor:pointer;transition:var(--transition)}
+    .share-btn:hover{transform:translateY(-1px);border-color:var(--primary-light)}
+    .share-btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border-color:transparent}
+    .share-status{font-size:0.73rem;min-height:1rem;margin-top:-0.15rem;margin-bottom:0.55rem}
+    .share-status.neutral{color:var(--text-muted);font-weight:600}
+    .share-status.ok{color:var(--success);font-weight:700}
+    .share-status.error{color:#9D0208;font-weight:700}
 
     /* RESULTS */
     .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem}
@@ -224,8 +233,24 @@
           <input type="number" id="flourAmount" value="1000" min="100" max="10000" step="50" inputmode="numeric" oninput="calculate()">
         </div>
         <div class="input-group">
-          <label class="input-label" for="numBalls">Numero di panetti</label>
-          <input type="number" id="numBalls" value="4" min="1" max="50" step="1" inputmode="numeric" oninput="calculate()">
+          <label class="input-label" for="doughStyle">Tipo impasto (peso panetto)</label>
+          <select id="doughStyle" onchange="onDoughStyleChange()">
+            <option value="napoletana" selected>Napoletana (~260g)</option>
+            <option value="classica">Tonda classica (~230g)</option>
+            <option value="pinsa">Pinsa/Pinza romana (~250g)</option>
+            <option value="teglia">Pizza in teglia (~300g)</option>
+            <option value="pala">Pala romana (~280g)</option>
+            <option value="custom">Custom</option>
+          </select>
+          <p class="hint-text" id="doughStyleHint"></p>
+        </div>
+        <div class="input-group" id="customBallWeightGroup" style="display:none">
+          <label class="input-label" for="customBallWeight">Peso panetto custom (grammi)</label>
+          <input type="number" id="customBallWeight" value="250" min="100" max="700" step="5" inputmode="numeric" oninput="calculate()">
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="numBalls">Numero di panetti (automatico)</label>
+          <input type="number" id="numBalls" value="4" min="1" max="50" step="1" inputmode="numeric" readonly class="readonly-input">
           <p class="hint-text" id="ballWeightHint"></p>
         </div>
       </div>
@@ -463,6 +488,12 @@
     <!-- SCHEDULE -->
     <div class="card" id="scheduleCard">
       <div class="card-title">📋 Pianificazione passo-passo</div>
+      <div class="share-actions">
+        <button class="share-btn primary" onclick="sharePlan()">📤 Inoltra</button>
+        <button class="share-btn" onclick="sharePlanToWhatsApp()">🟢 WhatsApp</button>
+        <button class="share-btn" onclick="copyPlanText()">📝 Copia per Note</button>
+      </div>
+      <p class="share-status neutral" id="shareStatus"></p>
       <div class="schedule" id="scheduleTimeline"></div>
     </div>
   </main>
@@ -552,6 +583,15 @@ const TRAY_OPTIONS = [
   { value:'custom_rect',  label:'✏️ Rettangolare custom', area: 0 }
 ];
 
+const DOUGH_STYLE_PRESETS = [
+  { id:'napoletana', label:'Napoletana', ballWeight:260, note:'cornicione pronunciato' },
+  { id:'classica', label:'Tonda classica', ballWeight:230, note:'stile tradizionale domestico' },
+  { id:'pinsa', label:'Pinsa/Pinza romana', ballWeight:250, note:'impasto più idratato e leggero' },
+  { id:'teglia', label:'Pizza in teglia', ballWeight:300, note:'maturazione e alveolatura in teglia' },
+  { id:'pala', label:'Pala romana', ballWeight:280, note:'formato allungato' },
+  { id:'custom', label:'Custom', ballWeight:250, note:'' }
+];
+
 const YEAST_CURVE = [
   [1,3.0],[2,1.8],[3,1.2],[4,0.85],[5,0.6],[6,0.45],
   [8,0.3],[10,0.22],[12,0.16],[16,0.1],[20,0.07],
@@ -573,6 +613,8 @@ let blendIdCounter = 1;
 let blendFlours = [{ id: 1, flourId: 'caputo_pizzeria', pct: 100 }];
 let flourPanelOpen = false;
 let manualStrategy = false;
+let lastPlanContext = null;
+let lastScheduleShareLines = [];
 
 // ===== INIT =====
 function init() {
@@ -580,6 +622,7 @@ function init() {
   populateFlourBrand();
   renderTrays();
   renderBlend();
+  onDoughStyleChange();
   updateSliderProgress('hydration', 50, 85);
   updateSliderProgress('saltPct', 1.5, 4);
   updateSliderProgress('pfPct', 15, 50);
@@ -612,6 +655,36 @@ function switchMode(mode) {
   document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
   document.getElementById('flourMode').classList.toggle('active', mode === 'flour');
   document.getElementById('trayMode').classList.toggle('active', mode === 'tray');
+  calculate();
+}
+
+function getSelectedDoughStyle() {
+  const selected = document.getElementById('doughStyle').value;
+  return DOUGH_STYLE_PRESETS.find(s => s.id === selected) || DOUGH_STYLE_PRESETS[0];
+}
+
+function getTargetBallWeight() {
+  const style = getSelectedDoughStyle();
+  if (style.id !== 'custom') return style.ballWeight;
+  const custom = parseFloat(document.getElementById('customBallWeight').value) || style.ballWeight;
+  return Math.max(100, Math.min(700, custom));
+}
+
+function onDoughStyleChange() {
+  const style = getSelectedDoughStyle();
+  const customWrap = document.getElementById('customBallWeightGroup');
+  const customInput = document.getElementById('customBallWeight');
+  const hint = document.getElementById('doughStyleHint');
+  if (style.id === 'custom') {
+    customWrap.style.display = '';
+    customInput.disabled = false;
+    hint.textContent = 'Imposta il peso del panetto ideale e il numero sarà calcolato in automatico.';
+  } else {
+    customWrap.style.display = 'none';
+    customInput.disabled = true;
+    customInput.value = style.ballWeight;
+    hint.textContent = `${style.label}: target ~${style.ballWeight}g (${style.note}).`;
+  }
   calculate();
 }
 
@@ -1118,9 +1191,13 @@ function calculate() {
 
   // Flour
   let flour, numPieces, trayDoughWeights = [];
+  let selectedDoughStyle = null;
+  let targetBallWeight = null;
   if (currentMode === 'flour') {
     flour = parseFloat(document.getElementById('flourAmount').value)||1000;
-    numPieces = parseInt(document.getElementById('numBalls').value)||4;
+    selectedDoughStyle = getSelectedDoughStyle();
+    targetBallWeight = getTargetBallWeight();
+    numPieces = Math.max(1, parseInt(document.getElementById('numBalls').value)||4);
   } else {
     const styleFactor = parseFloat(document.getElementById('pizzaStyle').value)||0.65;
     let totalDoughNeeded = 0;
@@ -1146,14 +1223,40 @@ function calculate() {
   }
 
   const totalDough = flour + water + salt + yeast;
+
+  if (currentMode === 'flour') {
+    numPieces = Math.max(1, Math.round(totalDough / Math.max(80, targetBallWeight || 250)));
+    document.getElementById('numBalls').value = numPieces;
+  }
+
   const ballWeight = totalDough / numPieces;
 
   if (currentMode === 'flour') {
-    document.getElementById('ballWeightHint').textContent = `Peso per panetto: ~${Math.round(ballWeight)}g`;
+    const styleLabel = selectedDoughStyle ? selectedDoughStyle.label : 'Custom';
+    document.getElementById('ballWeightHint').textContent = `${styleLabel}: target ~${Math.round(targetBallWeight)}g · effettivo ~${Math.round(ballWeight)}g`;
   } else {
     document.getElementById('trayFlourHint').textContent = `Farina necessaria: ~${Math.round(flour)}g`;
     trays.forEach((t,i) => { const el = document.getElementById('trayDough_'+t.id); if (el && trayDoughWeights[i]) el.textContent = `~${Math.round(trayDoughWeights[i].weight)}g impasto`; });
   }
+
+  lastPlanContext = {
+    mode: currentMode,
+    doughStyleLabel: selectedDoughStyle ? selectedDoughStyle.label : null,
+    targetBallWeight,
+    flour,
+    water,
+    salt,
+    yeast,
+    totalDough,
+    numPieces,
+    ballWeight,
+    isDry,
+    hydrationPct: hydration * 100,
+    saltPct: saltPct * 100,
+    prefermentType,
+    pf,
+    trayDoughWeights
+  };
 
   // Warnings
   renderWarnings(generateWarnings({
@@ -1209,7 +1312,11 @@ function renderResults(flour, water, salt, yeast, totalDough, numPieces, isDry, 
 
 // ===== RENDER SCHEDULE =====
 function renderSchedule(flour, water, salt, yeast, totalDough, numPieces, isDry, pf, trayDoughWeights, totalHours, pfHoursDuration, mainDoughHours, roomBefore, fridgeHours, roomAfter, ballDivBefore, useFridge) {
-  if (totalHours < 1) { document.getElementById('scheduleTimeline').innerHTML = '<p class="hint-text">Imposta gli orari per vedere la pianificazione.</p>'; return; }
+  if (totalHours < 1) {
+    lastScheduleShareLines = [];
+    document.getElementById('scheduleTimeline').innerHTML = '<p class="hint-text">Imposta gli orari per vedere la pianificazione.</p>';
+    return;
+  }
 
   const fmt = n => n < 0.1 ? n.toFixed(3) : n < 1 ? n.toFixed(2) : n < 10 ? n.toFixed(1) : Math.round(n).toString();
   const yeastLabel = isDry ? 'lievito secco' : 'lievito fresco';
@@ -1258,6 +1365,13 @@ function renderSchedule(flour, water, salt, yeast, totalDough, numPieces, isDry,
     detail: currentMode==='tray' ? trayDoughWeights.map((tw,i)=>`${tw.label}: ~${Math.round(tw.weight)}g`).join(' · ') : 'Buon appetito! 🎉', highlight:true });
 
   steps.sort((a,b) => a.time - b.time);
+  lastScheduleShareLines = steps.map(step => {
+    const d = new Date(step.time);
+    const ts = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const day = `${DAYS_IT[d.getDay()]} ${d.getDate()} ${MONTHS_IT[d.getMonth()]}`;
+    const detail = step.detail.replace(/\n/g,' ').replace(/\s+/g,' ').trim();
+    return `${day} ${ts} — ${step.title}: ${detail}`;
+  });
   let html = '', lastDay = '';
   steps.forEach((step, idx) => {
     const d = new Date(step.time);
@@ -1269,6 +1383,122 @@ function renderSchedule(flour, water, salt, yeast, totalDough, numPieces, isDry,
       <div class="schedule-content"><div class="schedule-time">${ts} — ${step.icon} ${step.title}</div><div class="schedule-detail">${step.detail.replace(/\n/g,'<br>')}</div></div></div>`;
   });
   document.getElementById('scheduleTimeline').innerHTML = html;
+}
+
+function setShareStatus(message, tone='neutral') {
+  const statusEl = document.getElementById('shareStatus');
+  if (!statusEl) return;
+  statusEl.className = `share-status ${tone}`;
+  statusEl.textContent = message;
+}
+
+function buildPlanShareText() {
+  if (!lastPlanContext) return '';
+  const fmt = n => n < 0.1 ? n.toFixed(3) : n < 1 ? n.toFixed(2) : n < 10 ? n.toFixed(1) : Math.round(n).toString();
+  const yeastLabel = lastPlanContext.isDry ? 'Lievito secco' : 'Lievito fresco';
+  const lines = ['Pizza Calculator — Pianificazione impasto', ''];
+
+  if (lastPlanContext.mode === 'flour') {
+    lines.push(`Tipo impasto: ${lastPlanContext.doughStyleLabel || 'Custom'}`);
+    lines.push(`Peso panetto target: ~${Math.round(lastPlanContext.targetBallWeight || 0)}g`);
+  } else {
+    lines.push('Modalità: Da Teglie');
+  }
+
+  lines.push(`Pezzi: ${lastPlanContext.numPieces}`);
+  lines.push(`Peso medio per pezzo: ~${Math.round(lastPlanContext.ballWeight)}g`);
+  lines.push(`Idratazione: ${lastPlanContext.hydrationPct.toFixed(0)}%`);
+  lines.push(`Sale: ${lastPlanContext.saltPct.toFixed(1)}%`);
+  lines.push('');
+  lines.push('Ingredienti totali:');
+  lines.push(`- Farina: ${fmt(lastPlanContext.flour)}g`);
+  lines.push(`- Acqua: ${fmt(lastPlanContext.water)}g`);
+  lines.push(`- Sale: ${fmt(lastPlanContext.salt)}g`);
+  lines.push(`- ${yeastLabel}: ${fmt(lastPlanContext.yeast)}g`);
+
+  if (lastPlanContext.pf) {
+    lines.push('');
+    lines.push(`Pre-fermento (${lastPlanContext.pf.type}):`);
+    lines.push(`- Farina: ${fmt(lastPlanContext.pf.flour)}g`);
+    lines.push(`- Acqua: ${fmt(lastPlanContext.pf.water)}g`);
+    lines.push(`- ${yeastLabel}: ${fmt(lastPlanContext.pf.yeast)}g`);
+  }
+
+  if (lastPlanContext.mode === 'tray' && lastPlanContext.trayDoughWeights.length > 0) {
+    lines.push('');
+    lines.push('Pesi per teglia:');
+    lastPlanContext.trayDoughWeights.forEach(tw => lines.push(`- ${tw.label}: ~${Math.round(tw.weight)}g`));
+  }
+
+  lines.push('');
+  lines.push('Pianificazione passo-passo:');
+  if (lastScheduleShareLines.length === 0) lines.push('- Imposta gli orari per generarla.');
+  else lastScheduleShareLines.forEach((line, idx) => lines.push(`${idx + 1}. ${line}`));
+
+  return lines.join('\n');
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand('copy');
+  document.body.removeChild(ta);
+  if (!ok) throw new Error('Copy failed');
+}
+
+async function copyPlanText() {
+  const text = buildPlanShareText();
+  if (!text) {
+    setShareStatus('Calcola prima ingredienti e pianificazione.', 'error');
+    return;
+  }
+  try {
+    await copyTextToClipboard(text);
+    setShareStatus('Testo copiato: puoi incollarlo in Note, Promemoria o chat.', 'ok');
+  } catch {
+    setShareStatus('Non sono riuscito a copiare il testo negli appunti.', 'error');
+  }
+}
+
+function sharePlanToWhatsApp() {
+  const text = buildPlanShareText();
+  if (!text) {
+    setShareStatus('Calcola prima ingredienti e pianificazione.', 'error');
+    return;
+  }
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank', 'noopener');
+  setShareStatus('Aperto WhatsApp con il messaggio precompilato.', 'ok');
+}
+
+async function sharePlan() {
+  const text = buildPlanShareText();
+  if (!text) {
+    setShareStatus('Calcola prima ingredienti e pianificazione.', 'error');
+    return;
+  }
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Pianificazione Pizza', text });
+      setShareStatus('Pianificazione condivisa con successo.', 'ok');
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        setShareStatus('Condivisione annullata.', 'neutral');
+        return;
+      }
+    }
+  }
+  await copyPlanText();
 }
 
 // ===== PWA =====
