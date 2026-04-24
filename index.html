@@ -145,6 +145,18 @@
     .preset-status.neutral{color:var(--text-muted);font-weight:600}
     .preset-status.ok{color:var(--success);font-weight:700}
     .preset-status.error{color:#9D0208;font-weight:700}
+    textarea{width:100%;padding:0.65rem 0.8rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:0.88rem;font-weight:600;color:var(--text);background:#FEFCFA;transition:var(--transition);resize:vertical;min-height:86px}
+    textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,93,4,0.15)}
+    .history-list{display:grid;gap:0.6rem;margin-top:0.55rem}
+    .history-item{background:#FDF8F4;border:2px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem}
+    .history-head{display:flex;justify-content:space-between;gap:0.6rem;align-items:flex-start;margin-bottom:0.35rem}
+    .history-title{font-size:0.82rem;font-weight:800;color:var(--primary-dark)}
+    .history-meta{font-size:0.73rem;font-weight:700;color:var(--text-muted);line-height:1.45}
+    .history-note{font-size:0.77rem;font-weight:600;color:var(--text-light);margin-top:0.35rem;line-height:1.45;white-space:pre-wrap}
+    .history-photo{display:block;width:100%;max-height:190px;object-fit:cover;border-radius:10px;border:2px solid var(--border);margin-top:0.45rem}
+    .history-delete{border:none;background:rgba(220,47,2,0.1);color:#9D0208;border-radius:999px;padding:0.25rem 0.65rem;font-family:inherit;font-size:0.72rem;font-weight:800;cursor:pointer;transition:var(--transition)}
+    .history-delete:hover{background:rgba(220,47,2,0.2)}
+    .history-empty{font-size:0.75rem;color:var(--text-muted);font-weight:600;padding:0.55rem 0.7rem;background:rgba(232,93,4,0.05);border-radius:8px;border-left:3px solid var(--primary-light)}
     .share-actions{display:flex;flex-wrap:wrap;gap:0.45rem;margin-bottom:0.55rem}
     .share-btn{flex:1;min-width:125px;border:2px solid var(--border);background:#FEFCFA;color:var(--text);font-family:inherit;font-size:0.78rem;font-weight:800;padding:0.55rem 0.6rem;border-radius:999px;cursor:pointer;transition:var(--transition)}
     .share-btn:hover{transform:translateY(-1px);border-color:var(--primary-light)}
@@ -507,6 +519,36 @@
       <p class="preset-status neutral" id="presetStatus"></p>
     </div>
 
+    <!-- HISTORY -->
+    <div class="card" id="historyCard">
+      <div class="card-title">📚 Storico impasti</div>
+      <div class="inline-inputs" style="margin-bottom:0.5rem">
+        <div>
+          <label class="input-label" for="historyRating">Valutazione risultato</label>
+          <select id="historyRating">
+            <option value="5" selected>★★★★★ Ottimo</option>
+            <option value="4">★★★★☆ Buono</option>
+            <option value="3">★★★☆☆ Discreto</option>
+            <option value="2">★★☆☆☆ Da migliorare</option>
+            <option value="1">★☆☆☆☆ Scarso</option>
+          </select>
+        </div>
+        <div class="preset-actions">
+          <button class="preset-btn primary" onclick="saveCurrentToHistory()">Salva prova</button>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="historyNote">Note risultato</label>
+        <textarea id="historyNote" maxlength="500" placeholder="Es. cornicione ottimo, impasto poco estensibile, cottura 90s..."></textarea>
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="historyPhoto">Foto (opzionale)</label>
+        <input type="file" id="historyPhoto" accept="image/*">
+      </div>
+      <p class="preset-status neutral" id="historyStatus"></p>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
     <!-- WARNINGS -->
     <div id="warningsArea"></div>
 
@@ -646,6 +688,7 @@ const DOUGH_STYLE_PRESETS = [
 ];
 
 const PRESET_STORAGE_KEY = 'pizzaCalcPresetsV1';
+const HISTORY_STORAGE_KEY = 'pizzaCalcHistoryV1';
 
 const YEAST_CURVE = [
   [1,3.0],[2,1.8],[3,1.2],[4,0.85],[5,0.6],[6,0.45],
@@ -673,6 +716,7 @@ let lastScheduleShareLines = [];
 let lastScheduleEvents = [];
 let reminderTimers = [];
 let savedPresets = [];
+let doughHistory = [];
 
 // ===== INIT =====
 function init() {
@@ -681,6 +725,7 @@ function init() {
   renderTrays();
   renderBlend();
   loadSavedPresets();
+  loadDoughHistory();
   onDoughStyleChange();
   updateSliderProgress('hydration', 50, 85);
   updateSliderProgress('saltPct', 1.5, 4);
@@ -1225,6 +1270,145 @@ function deleteSelectedPreset() {
   savePresetsToStorage();
   renderPresetSelect();
   setPresetStatus(`Preset "${p.name}" eliminato.`, 'ok');
+}
+
+// ===== HISTORY =====
+function setHistoryStatus(message, tone='neutral') {
+  const el = document.getElementById('historyStatus');
+  if (!el) return;
+  el.className = `preset-status ${tone}`;
+  el.textContent = message;
+}
+
+function saveDoughHistoryToStorage() {
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(doughHistory));
+}
+
+function loadDoughHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    doughHistory = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    doughHistory = [];
+  }
+  renderDoughHistory();
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatHistoryDate(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'Data non disponibile';
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+async function readHistoryPhotoData() {
+  const fileInput = document.getElementById('historyPhoto');
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return '';
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error('Foto troppo grande (max 2MB).');
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result || '');
+    reader.onerror = () => reject(new Error('Impossibile leggere la foto.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveCurrentToHistory() {
+  if (!lastPlanContext) {
+    setHistoryStatus('Calcola prima l\'impasto per salvare una prova.', 'error');
+    return;
+  }
+
+  try {
+    const photoData = await readHistoryPhotoData();
+    const rating = Math.max(1, Math.min(5, parseInt(document.getElementById('historyRating').value) || 5));
+    const note = document.getElementById('historyNote').value.trim();
+    const snapshot = {
+      id: `${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      createdAt: new Date().toISOString(),
+      rating,
+      note,
+      photoData,
+      mode: lastPlanContext.mode,
+      doughStyleLabel: lastPlanContext.doughStyleLabel || (lastPlanContext.mode === 'tray' ? 'Da Teglie' : 'Custom'),
+      targetBallWeight: lastPlanContext.targetBallWeight,
+      hydrationPct: lastPlanContext.hydrationPct,
+      saltPct: lastPlanContext.saltPct,
+      flour: Math.round(lastPlanContext.flour),
+      water: Math.round(lastPlanContext.water),
+      salt: Math.round(lastPlanContext.salt),
+      yeast: Number(lastPlanContext.yeast.toFixed(2)),
+      totalDough: Math.round(lastPlanContext.totalDough),
+      numPieces: lastPlanContext.numPieces,
+      ballWeight: Math.round(lastPlanContext.ballWeight),
+      schedulePreview: lastScheduleShareLines.slice(0, 3)
+    };
+
+    doughHistory.unshift(snapshot);
+    if (doughHistory.length > 50) doughHistory = doughHistory.slice(0, 50);
+    saveDoughHistoryToStorage();
+    renderDoughHistory();
+    document.getElementById('historyNote').value = '';
+    document.getElementById('historyPhoto').value = '';
+    setHistoryStatus('Prova salvata nello storico.', 'ok');
+  } catch (err) {
+    setHistoryStatus(err.message || 'Errore durante il salvataggio della prova.', 'error');
+  }
+}
+
+function deleteHistoryItem(id) {
+  const item = doughHistory.find(x => x.id === id);
+  if (!item) return;
+  if (!window.confirm('Eliminare questa prova dallo storico?')) return;
+  doughHistory = doughHistory.filter(x => x.id !== id);
+  saveDoughHistoryToStorage();
+  renderDoughHistory();
+  setHistoryStatus('Prova eliminata.', 'ok');
+}
+
+function renderDoughHistory() {
+  const list = document.getElementById('historyList');
+  if (!list) return;
+  if (doughHistory.length === 0) {
+    list.innerHTML = '<div class="history-empty">Nessuna prova salvata. Salva un impasto per costruire il tuo storico.</div>';
+    return;
+  }
+
+  list.innerHTML = doughHistory.map(item => {
+    const stars = `${'★'.repeat(item.rating)}${'☆'.repeat(5 - item.rating)}`;
+    const note = item.note ? `<div class="history-note">${escapeHtml(item.note)}</div>` : '';
+    const photo = item.photoData ? `<img class="history-photo" src="${item.photoData}" alt="Foto impasto">` : '';
+    const preview = item.schedulePreview && item.schedulePreview.length > 0
+      ? `<div class="history-meta" style="margin-top:0.3rem">${item.schedulePreview.map(x => `• ${escapeHtml(x)}`).join('<br>')}</div>`
+      : '';
+    return `<div class="history-item">
+      <div class="history-head">
+        <div>
+          <div class="history-title">${escapeHtml(item.doughStyleLabel)} · ${stars}</div>
+          <div class="history-meta">${formatHistoryDate(item.createdAt)}<br>
+          ${item.numPieces} pezzi · ~${item.ballWeight}g ciascuno · idr. ${Math.round(item.hydrationPct)}%</div>
+        </div>
+        <button class="history-delete" onclick="deleteHistoryItem('${item.id}')">Elimina</button>
+      </div>
+      <div class="history-meta">Farina ${item.flour}g · Acqua ${item.water}g · Sale ${item.salt}g · Lievito ${item.yeast}g</div>
+      ${note}
+      ${preview}
+      ${photo}
+    </div>`;
+  }).join('');
 }
 
 // ===== YEAST =====
