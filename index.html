@@ -405,6 +405,11 @@
           </div>
         </div>
       </div>
+      <div class="input-group">
+        <label class="input-label" for="ambientTemp">Temperatura ambiente (°C)</label>
+        <input type="number" id="ambientTemp" value="22" min="10" max="35" step="0.5" inputmode="decimal" oninput="calculate()">
+        <p class="hint-text" id="ambientTempHint"></p>
+      </div>
     </div>
 
     <!-- PRE-FERMENT -->
@@ -1120,6 +1125,7 @@ function captureCurrentPresetState() {
     manualStrategy,
     numFolds: parseInt(document.getElementById('numFolds').value) || 3,
     ballDivBefore: parseFloat(document.getElementById('ballDivBefore').value) || 2,
+    ambientTemp: parseFloat(document.getElementById('ambientTemp').value) || 22,
     pizzaStyle: document.getElementById('pizzaStyle').value,
     trays: trays.map(t => ({ preset: t.preset, dim1: t.dim1, dim2: t.dim2 })),
     flourMode,
@@ -1149,6 +1155,7 @@ function applyPresetState(state) {
   document.getElementById('roomAfter').value = state.roomAfter ?? 1.5;
   document.getElementById('numFolds').value = state.numFolds ?? 3;
   document.getElementById('ballDivBefore').value = state.ballDivBefore ?? 2;
+  document.getElementById('ambientTemp').value = state.ambientTemp ?? 22;
   if (state.pizzaStyle) document.getElementById('pizzaStyle').value = state.pizzaStyle;
 
   if (Array.isArray(state.trays) && state.trays.length > 0) {
@@ -1347,6 +1354,7 @@ async function saveCurrentToHistory() {
       targetBallWeight: lastPlanContext.targetBallWeight,
       hydrationPct: lastPlanContext.hydrationPct,
       saltPct: lastPlanContext.saltPct,
+      ambientTemp: lastPlanContext.ambientTemp,
       flour: Math.round(lastPlanContext.flour),
       water: Math.round(lastPlanContext.water),
       salt: Math.round(lastPlanContext.salt),
@@ -1399,7 +1407,7 @@ function renderDoughHistory() {
         <div>
           <div class="history-title">${escapeHtml(item.doughStyleLabel)} · ${stars}</div>
           <div class="history-meta">${formatHistoryDate(item.createdAt)}<br>
-          ${item.numPieces} pezzi · ~${item.ballWeight}g ciascuno · idr. ${Math.round(item.hydrationPct)}%</div>
+          ${item.numPieces} pezzi · ~${item.ballWeight}g ciascuno · idr. ${Math.round(item.hydrationPct)}% · ${Number(item.ambientTemp || 22).toFixed(1)}°C</div>
         </div>
         <button class="history-delete" onclick="deleteHistoryItem('${item.id}')">Elimina</button>
       </div>
@@ -1418,6 +1426,11 @@ function yeastPctFromEffectiveHours(h) {
     if (h <= YEAST_CURVE[i+1][0]) { const [h1,y1] = YEAST_CURVE[i], [h2,y2] = YEAST_CURVE[i+1]; const t = (h-h1)/(h2-h1); return y1 * Math.pow(y2/y1, t); }
   }
   return YEAST_CURVE[YEAST_CURVE.length-1][1];
+}
+
+function temperatureYeastFactor(tempC) {
+  const raw = Math.pow(2, (22 - tempC) / 10);
+  return Math.max(0.55, Math.min(1.9, raw));
 }
 
 // ===== SMART FRIDGE STRATEGY =====
@@ -1516,6 +1529,14 @@ function generateWarnings(p) {
   else if (!p.useFridge && p.mainDoughHours > 7)
     w.push({ level:'caution', icon:'🌡️', text:`${p.mainDoughHours.toFixed(0)}h a temperatura ambiente. Con temp. oltre 25°C potrebbe sovra-lievitare.` });
 
+  // === AMBIENT TEMPERATURE ===
+  if (p.ambientTemp >= 28 && !p.useFridge && p.mainDoughHours > 4)
+    w.push({ level:'danger', icon:'🔥', text:`Temperatura ambiente ${p.ambientTemp.toFixed(1)}°C: alto rischio sovra-fermentazione. Valuta frigo o riduci i tempi.` });
+  else if (p.ambientTemp >= 26)
+    w.push({ level:'caution', icon:'🔥', text:`Temperatura ambiente ${p.ambientTemp.toFixed(1)}°C: controlla spesso la lievitazione, procede più veloce.` });
+  if (p.ambientTemp <= 16 && p.mainDoughHours < 8)
+    w.push({ level:'caution', icon:'🧊', text:`Temperatura ambiente ${p.ambientTemp.toFixed(1)}°C: lievitazione lenta, potresti aver bisogno di più tempo.` });
+
   // === FRIDGE TOO SHORT ===
   if (p.useFridge && p.fridgeHours > 0 && p.fridgeHours < 4)
     w.push({ level:'caution', icon:'❄️', text:`Solo ${p.fridgeHours.toFixed(1)}h in frigo: poco utile. Sotto le 6h il frigo non contribuisce molto.` });
@@ -1590,6 +1611,7 @@ function calculate() {
   const hydration = parseFloat(document.getElementById('hydration').value)/100;
   const saltPct = parseFloat(document.getElementById('saltPct').value)/100;
   const isDry = document.getElementById('yeastType').checked;
+  const ambientTemp = parseFloat(document.getElementById('ambientTemp').value) || 22;
   document.getElementById('yeastLabelFresh').classList.toggle('active', !isDry);
   document.getElementById('yeastLabelDry').classList.toggle('active', isDry);
 
@@ -1636,9 +1658,23 @@ function calculate() {
   const effectiveHours = roomBefore + roomAfter + fridgeHours / 3.5;
   const ballDivBefore = parseFloat(document.getElementById('ballDivBefore').value)||2;
   const ballFactor = 1 - (Math.min(ballDivBefore, 6) / 60);
+  const tempFactor = temperatureYeastFactor(ambientTemp);
 
-  let yeastFreshPct = yeastPctFromEffectiveHours(effectiveHours) * ballFactor / 100;
+  let yeastFreshPct = yeastPctFromEffectiveHours(effectiveHours) * ballFactor * tempFactor / 100;
   if (isDry) yeastFreshPct /= 3;
+
+  const tempHint = document.getElementById('ambientTempHint');
+  const deltaPct = Math.round((tempFactor - 1) * 100);
+  if (Math.abs(deltaPct) <= 3) {
+    tempHint.textContent = '22°C circa: dose lievito standard.';
+    tempHint.className = 'hint-text';
+  } else if (deltaPct > 0) {
+    tempHint.textContent = `Temperatura bassa: dose lievito aumentata di ~${deltaPct}%`;
+    tempHint.className = 'warning-text';
+  } else {
+    tempHint.textContent = `Temperatura alta: dose lievito ridotta di ~${Math.abs(deltaPct)}%`;
+    tempHint.className = 'success-text';
+  }
 
   // Time hints
   const hoursHint = document.getElementById('totalHoursHint');
@@ -1703,6 +1739,7 @@ function calculate() {
     mode: currentMode,
     doughStyleLabel: selectedDoughStyle ? selectedDoughStyle.label : null,
     targetBallWeight,
+    ambientTemp,
     flour,
     water,
     salt,
@@ -1722,7 +1759,7 @@ function calculate() {
   renderWarnings(generateWarnings({
     flour, water, salt, yeast, totalDough, numPieces, isDry, hydration, saltPct,
     totalHours, mainDoughHours, effectiveHours, roomBefore, fridgeHours, roomAfter,
-    useFridge, ballWeight, pfHoursDuration
+    useFridge, ballWeight, pfHoursDuration, ambientTemp
   }));
 
   renderResults(flour, water, salt, yeast, totalDough, numPieces, isDry, pf, trayDoughWeights);
@@ -1941,6 +1978,7 @@ function buildPlanShareText() {
 
   lines.push(`Pezzi: ${lastPlanContext.numPieces}`);
   lines.push(`Peso medio per pezzo: ~${Math.round(lastPlanContext.ballWeight)}g`);
+  lines.push(`Temperatura ambiente: ${lastPlanContext.ambientTemp.toFixed(1)}°C`);
   lines.push(`Idratazione: ${lastPlanContext.hydrationPct.toFixed(0)}%`);
   lines.push(`Sale: ${lastPlanContext.saltPct.toFixed(1)}%`);
   lines.push('');
