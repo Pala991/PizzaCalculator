@@ -593,6 +593,12 @@
         </div>
       </div>
       <p class="share-status neutral" id="reminderStatus"></p>
+      <div class="share-actions" style="margin-bottom:0.35rem">
+        <button class="share-btn" onclick="exportPlanPdf()">📄 PDF stampabile</button>
+        <button class="share-btn" onclick="downloadPlanText()">⬇️ TXT</button>
+        <button class="share-btn" onclick="downloadPlanJson()">⬇️ JSON</button>
+      </div>
+      <p class="share-status neutral" id="exportStatus"></p>
       <p class="share-status neutral" id="shareStatus"></p>
       <div class="schedule" id="scheduleTimeline"></div>
     </div>
@@ -1895,6 +1901,13 @@ function setShareStatus(message, tone='neutral') {
   statusEl.textContent = message;
 }
 
+function setExportStatus(message, tone='neutral') {
+  const statusEl = document.getElementById('exportStatus');
+  if (!statusEl) return;
+  statusEl.className = `share-status ${tone}`;
+  statusEl.textContent = message;
+}
+
 function setReminderStatus(message, tone='neutral') {
   const statusEl = document.getElementById('reminderStatus');
   if (!statusEl) return;
@@ -2071,6 +2084,139 @@ async function sharePlan() {
     }
   }
   await copyPlanText();
+}
+
+function buildPlanExportPayload() {
+  if (!lastPlanContext) return null;
+  return {
+    generatedAt: new Date().toISOString(),
+    summary: {
+      mode: lastPlanContext.mode,
+      doughStyle: lastPlanContext.doughStyleLabel || 'Custom',
+      targetBallWeight: Math.round(lastPlanContext.targetBallWeight || 0),
+      pieces: lastPlanContext.numPieces,
+      avgPieceWeight: Math.round(lastPlanContext.ballWeight),
+      ambientTemp: Number(lastPlanContext.ambientTemp || 22).toFixed(1),
+      hydrationPct: Number(lastPlanContext.hydrationPct || 0).toFixed(0),
+      saltPct: Number(lastPlanContext.saltPct || 0).toFixed(1)
+    },
+    ingredients: {
+      flour: Number(lastPlanContext.flour.toFixed(2)),
+      water: Number(lastPlanContext.water.toFixed(2)),
+      salt: Number(lastPlanContext.salt.toFixed(2)),
+      yeast: Number(lastPlanContext.yeast.toFixed(3)),
+      preferment: lastPlanContext.pf || null
+    },
+    schedule: [...lastScheduleShareLines]
+  };
+}
+
+function makeExportFileBaseName() {
+  const now = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `pizza-plan-${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}`;
+}
+
+function downloadBlob(filename, mimeType, content) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 800);
+}
+
+function downloadPlanText() {
+  const text = buildPlanShareText();
+  if (!text) {
+    setExportStatus('Calcola prima ingredienti e pianificazione.', 'error');
+    return;
+  }
+  const filename = `${makeExportFileBaseName()}.txt`;
+  downloadBlob(filename, 'text/plain;charset=utf-8', text);
+  setExportStatus(`File testo esportato: ${filename}`, 'ok');
+}
+
+function downloadPlanJson() {
+  const payload = buildPlanExportPayload();
+  if (!payload) {
+    setExportStatus('Calcola prima ingredienti e pianificazione.', 'error');
+    return;
+  }
+  const filename = `${makeExportFileBaseName()}.json`;
+  downloadBlob(filename, 'application/json;charset=utf-8', JSON.stringify(payload, null, 2));
+  setExportStatus(`Backup JSON esportato: ${filename}`, 'ok');
+}
+
+function exportPlanPdf() {
+  const payload = buildPlanExportPayload();
+  if (!payload) {
+    setExportStatus('Calcola prima ingredienti e pianificazione.', 'error');
+    return;
+  }
+
+  const printable = window.open('', '_blank');
+  if (!printable) {
+    setExportStatus('Pop-up bloccato: abilita le finestre per esportare il PDF.', 'error');
+    return;
+  }
+
+  const scheduleHtml = payload.schedule.length > 0
+    ? payload.schedule.map((s, i) => `<li><strong>${i + 1}.</strong> ${escapeHtml(s)}</li>`).join('')
+    : '<li>Nessuna pianificazione disponibile.</li>';
+
+  const title = `Pianificazione Pizza - ${payload.summary.doughStyle}`;
+  printable.document.write(`<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:28px;color:#1b1b1b;line-height:1.45}
+    h1{font-size:22px;margin-bottom:6px}
+    .meta{font-size:13px;color:#555;margin-bottom:20px}
+    h2{font-size:16px;margin:18px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+    ul{margin:8px 0 0 18px;padding:0}
+    li{margin-bottom:8px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:14px}
+    .box{background:#faf7f5;border:1px solid #eee;border-radius:8px;padding:10px}
+    @media print{body{margin:12mm}}
+  </style>
+</head>
+<body>
+  <h1>${escapeHtml(title)}</h1>
+  <div class="meta">Generato il ${escapeHtml(new Date(payload.generatedAt).toLocaleString('it-IT'))}</div>
+
+  <h2>Riepilogo</h2>
+  <div class="grid">
+    <div class="box">Modalità: ${escapeHtml(payload.summary.mode === 'tray' ? 'Da Teglie' : 'Da Farina')}</div>
+    <div class="box">Impasto: ${escapeHtml(payload.summary.doughStyle)}</div>
+    <div class="box">Pezzi: ${payload.summary.pieces}</div>
+    <div class="box">Peso medio: ~${payload.summary.avgPieceWeight}g</div>
+    <div class="box">Temperatura ambiente: ${payload.summary.ambientTemp}°C</div>
+    <div class="box">Idratazione ${payload.summary.hydrationPct}% · Sale ${payload.summary.saltPct}%</div>
+  </div>
+
+  <h2>Ingredienti</h2>
+  <ul>
+    <li>Farina: ${payload.ingredients.flour}g</li>
+    <li>Acqua: ${payload.ingredients.water}g</li>
+    <li>Sale: ${payload.ingredients.salt}g</li>
+    <li>Lievito: ${payload.ingredients.yeast}g</li>
+  </ul>
+
+  <h2>Pianificazione</h2>
+  <ul>${scheduleHtml}</ul>
+</body>
+</html>`);
+  printable.document.close();
+  printable.focus();
+  setTimeout(() => printable.print(), 250);
+  setExportStatus('Finestra di stampa aperta: scegli "Salva come PDF".', 'ok');
 }
 
 // ===== PWA =====

@@ -15,6 +15,7 @@ Calcolatore di dosi per l'impasto della pizza perfetta. Web app statica, leggera
 - **Compensazione temperatura ambiente**: la dose di lievito si adatta automaticamente ai °C impostati
 - **Condivisione pianificazione**: inoltro rapido con Web Share, bottone WhatsApp e copia testo per app Note/Promemoria
 - **Promemoria locali**: notifiche browser su pieghe, uscita frigo e stesura con anticipo configurabile
+- **Export avanzato**: PDF stampabile e download TXT/JSON della pianificazione
 - **Storico impasti**: salvataggio prove con voto, note e foto opzionale
 - **PWA**: installabile su smartphone come app nativa
 - **Offline**: funziona anche senza connessione
@@ -75,7 +76,7 @@ Per far crescere l'app in modo utile, queste sono le priorità consigliate:
 2. **Storico impasti con note risultato**: completato con voto finale, foto e commento.
 3. **Scalatura ingredienti per ingredienti disponibili**: esempio, "ho solo 4g di lievito, quanta farina/acqua posso usare?".
 4. **Modalità multi-forno**: consigli tempi e temperature in base a forno domestico, elettrico professionale o pizza steel.
-5. **Export avanzato**: PDF stampabile della pianificazione e file testo/JSON per backup o condivisione.
+5. **Export avanzato**: completato con PDF stampabile e file TXT/JSON per backup o condivisione.
 6. **Notifiche intelligenti**: completato con promemoria locali su browser.
 7. **Gestione temperatura ambiente**: completato con input temperatura cucina e adattamento automatico del lievito.
 
