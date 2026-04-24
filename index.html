@@ -529,6 +529,23 @@
         <button class="share-btn" onclick="sharePlanToWhatsApp()">🟢 WhatsApp</button>
         <button class="share-btn" onclick="copyPlanText()">📝 Copia per Note</button>
       </div>
+      <div class="inline-inputs" style="margin-bottom:0.45rem">
+        <div>
+          <label class="input-label" for="reminderLeadMinutes">Promemoria</label>
+          <select id="reminderLeadMinutes">
+            <option value="0">All'orario esatto</option>
+            <option value="5">5 minuti prima</option>
+            <option value="10" selected>10 minuti prima</option>
+            <option value="15">15 minuti prima</option>
+            <option value="30">30 minuti prima</option>
+          </select>
+        </div>
+        <div class="preset-actions">
+          <button class="preset-btn" onclick="scheduleLocalReminders()">🔔 Attiva</button>
+          <button class="preset-btn danger" onclick="clearScheduledReminders()">🧹 Cancella</button>
+        </div>
+      </div>
+      <p class="share-status neutral" id="reminderStatus"></p>
       <p class="share-status neutral" id="shareStatus"></p>
       <div class="schedule" id="scheduleTimeline"></div>
     </div>
@@ -653,6 +670,8 @@ let flourPanelOpen = false;
 let manualStrategy = false;
 let lastPlanContext = null;
 let lastScheduleShareLines = [];
+let lastScheduleEvents = [];
+let reminderTimers = [];
 let savedPresets = [];
 
 // ===== INIT =====
@@ -1571,6 +1590,7 @@ function renderResults(flour, water, salt, yeast, totalDough, numPieces, isDry, 
 function renderSchedule(flour, water, salt, yeast, totalDough, numPieces, isDry, pf, trayDoughWeights, totalHours, pfHoursDuration, mainDoughHours, roomBefore, fridgeHours, roomAfter, ballDivBefore, useFridge) {
   if (totalHours < 1) {
     lastScheduleShareLines = [];
+    lastScheduleEvents = [];
     document.getElementById('scheduleTimeline').innerHTML = '<p class="hint-text">Imposta gli orari per vedere la pianificazione.</p>';
     return;
   }
@@ -1629,6 +1649,11 @@ function renderSchedule(flour, water, salt, yeast, totalDough, numPieces, isDry,
     const detail = step.detail.replace(/\n/g,' ').replace(/\s+/g,' ').trim();
     return `${day} ${ts} — ${step.title}: ${detail}`;
   });
+  lastScheduleEvents = steps.map(step => ({
+    time: step.time,
+    title: step.title,
+    detail: step.detail.replace(/\n/g,' ').replace(/\s+/g,' ').trim()
+  }));
   let html = '', lastDay = '';
   steps.forEach((step, idx) => {
     const d = new Date(step.time);
@@ -1647,6 +1672,74 @@ function setShareStatus(message, tone='neutral') {
   if (!statusEl) return;
   statusEl.className = `share-status ${tone}`;
   statusEl.textContent = message;
+}
+
+function setReminderStatus(message, tone='neutral') {
+  const statusEl = document.getElementById('reminderStatus');
+  if (!statusEl) return;
+  statusEl.className = `share-status ${tone}`;
+  statusEl.textContent = message;
+}
+
+function clearScheduledReminders(showMessage=true) {
+  reminderTimers.forEach(t => clearTimeout(t));
+  reminderTimers = [];
+  if (showMessage) setReminderStatus('Promemoria cancellati.', 'neutral');
+}
+
+async function ensureNotificationPermission() {
+  if (!('Notification' in window)) {
+    setReminderStatus('Questo browser non supporta le notifiche locali.', 'error');
+    return 'unsupported';
+  }
+  if (Notification.permission === 'granted') return 'granted';
+  if (Notification.permission === 'denied') {
+    setReminderStatus('Permesso notifiche negato: abilitalo dalle impostazioni del browser.', 'error');
+    return 'denied';
+  }
+  const result = await Notification.requestPermission();
+  if (result !== 'granted') {
+    setReminderStatus('Permesso notifiche non concesso.', 'error');
+  }
+  return result;
+}
+
+function fireLocalReminder(step) {
+  const body = step.detail.length > 120 ? `${step.detail.slice(0, 117)}...` : step.detail;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(`🍕 ${step.title}`, { body });
+  }
+}
+
+async function scheduleLocalReminders() {
+  if (lastScheduleEvents.length === 0) {
+    setReminderStatus('Imposta gli orari per generare prima la pianificazione.', 'error');
+    return;
+  }
+
+  const leadMinutes = Math.max(0, parseInt(document.getElementById('reminderLeadMinutes').value) || 0);
+  const permission = await ensureNotificationPermission();
+  if (permission !== 'granted') return;
+
+  clearScheduledReminders(false);
+
+  const now = Date.now();
+  const targets = lastScheduleEvents
+    .map(step => ({ ...step, triggerAt: step.time - leadMinutes * 60000 }))
+    .filter(step => step.triggerAt > now + 3000);
+
+  if (targets.length === 0) {
+    setReminderStatus('Nessun evento futuro utile per attivare promemoria.', 'error');
+    return;
+  }
+
+  targets.forEach(step => {
+    const delay = step.triggerAt - now;
+    const timer = setTimeout(() => fireLocalReminder(step), delay);
+    reminderTimers.push(timer);
+  });
+
+  setReminderStatus(`Promemoria attivati: ${targets.length} eventi (${leadMinutes} min di anticipo).`, 'ok');
 }
 
 function buildPlanShareText() {
@@ -1764,6 +1857,7 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferr
 document.getElementById('installBtn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; document.getElementById('installBanner').classList.remove('show'); } });
 document.getElementById('installClose').addEventListener('click', () => document.getElementById('installBanner').classList.remove('show'));
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+window.addEventListener('beforeunload', () => clearScheduledReminders(false));
 
 init();
 </script>
