@@ -6,6 +6,7 @@ Calcolatore di dosi per l'impasto della pizza perfetta. Web app statica, leggera
 
 - **Modalità Farina**: inserisci i grammi di farina e scegli il tipo di impasto; il numero panetti viene calcolato automaticamente
 - **Profili impasto in Da Farina**: Napoletana, Classica, Pinsa/Pinza, Teglia, Pala e **Custom** con peso panetto automatico
+- **Preset locali**: salva, carica ed elimina ricette personalizzate direttamente dal browser (LocalStorage)
 - **Modalità Teglie**: scegli formato e numero di teglie, calcola automaticamente la farina necessaria
 - **Idratazione regolabile** (50-85%)
 - **Sale regolabile** (1.5-4%)
@@ -67,7 +68,7 @@ Una volta aperto il link del sito:
 
 Per far crescere l'app in modo utile, queste sono le priorità consigliate:
 
-1. **Salvataggio ricette e preset locali**: salva configurazioni preferite (es. "Napoletana weekend", "Teglia 72h") in LocalStorage.
+1. **Salvataggio ricette e preset locali**: completato.
 2. **Storico impasti con note risultato**: aggiungi voto finale, foto e commento per confrontare le prove nel tempo.
 3. **Scalatura ingredienti per ingredienti disponibili**: esempio, "ho solo 4g di lievito, quanta farina/acqua posso usare?".
 4. **Modalità multi-forno**: consigli tempi e temperature in base a forno domestico, elettrico professionale o pizza steel.

@@ -41,10 +41,10 @@
     .input-label{display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;font-weight:700;color:var(--text-light);margin-bottom:0.35rem;flex-wrap:wrap;gap:0.2rem}
     .input-label .value-badge{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;padding:0.12rem 0.55rem;border-radius:20px;font-size:0.78rem;font-weight:800;flex-shrink:0}
 
-    input[type="number"],select,input[type="datetime-local"]{width:100%;padding:0.7rem 0.9rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:0.95rem;font-weight:600;color:var(--text);background:#FEFCFA;transition:var(--transition);-webkit-appearance:none;appearance:none;min-width:0}
+    input[type="number"],input[type="text"],select,input[type="datetime-local"]{width:100%;padding:0.7rem 0.9rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:0.95rem;font-weight:600;color:var(--text);background:#FEFCFA;transition:var(--transition);-webkit-appearance:none;appearance:none;min-width:0}
     input[type="datetime-local"]{font-size:0.82rem;padding:0.6rem 0.5rem}
     select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23E85D04' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;padding-right:2.5rem}
-    input[type="number"]:focus,select:focus,input[type="datetime-local"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,93,4,0.15)}
+    input[type="number"]:focus,input[type="text"]:focus,select:focus,input[type="datetime-local"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,93,4,0.15)}
     input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
     input[type="number"]{appearance:textfield;-moz-appearance:textfield}
 
@@ -136,6 +136,15 @@
     .schedule-title{font-size:0.88rem;font-weight:700;color:var(--text);margin-top:0.1rem}
     .schedule-detail{font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-top:0.1rem;line-height:1.4}
     .schedule-day-divider{font-size:0.7rem;font-weight:800;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.05em;padding:0.3rem 0 0.5rem;margin-top:0.2rem}
+    .preset-actions{display:flex;gap:0.5rem;align-items:flex-end}
+    .preset-btn{border:2px solid var(--border);background:#FEFCFA;color:var(--text);font-family:inherit;font-size:0.8rem;font-weight:800;padding:0.62rem 0.8rem;border-radius:12px;cursor:pointer;transition:var(--transition);flex:1}
+    .preset-btn:hover{transform:translateY(-1px);border-color:var(--primary-light)}
+    .preset-btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border-color:transparent}
+    .preset-btn.danger{border-color:rgba(220,47,2,0.2);color:#9D0208;background:rgba(220,47,2,0.06)}
+    .preset-status{font-size:0.73rem;min-height:1rem;margin-top:0.45rem}
+    .preset-status.neutral{color:var(--text-muted);font-weight:600}
+    .preset-status.ok{color:var(--success);font-weight:700}
+    .preset-status.error{color:#9D0208;font-weight:700}
     .share-actions{display:flex;flex-wrap:wrap;gap:0.45rem;margin-bottom:0.55rem}
     .share-btn{flex:1;min-width:125px;border:2px solid var(--border);background:#FEFCFA;color:var(--text);font-family:inherit;font-size:0.78rem;font-weight:800;padding:0.55rem 0.6rem;border-radius:999px;cursor:pointer;transition:var(--transition)}
     .share-btn:hover{transform:translateY(-1px);border-color:var(--primary-light)}
@@ -471,6 +480,33 @@
       <p class="hint-text">Le pieghe si fanno ogni 30 min dopo l'impasto. La divisione in panetti influisce leggermente sulla dose di lievito.</p>
     </div>
 
+    <!-- PRESETS -->
+    <div class="card" id="presetCard">
+      <div class="card-title">💾 Preset ricette</div>
+      <div class="inline-inputs" style="margin-bottom:0.6rem">
+        <div>
+          <label class="input-label" for="presetName">Nome preset</label>
+          <input type="text" id="presetName" maxlength="50" placeholder="Es. Napoletana weekend">
+        </div>
+        <div class="preset-actions">
+          <button class="preset-btn primary" onclick="saveCurrentPreset()">Salva</button>
+        </div>
+      </div>
+      <div class="inline-inputs">
+        <div>
+          <label class="input-label" for="presetSelect">Preset salvati</label>
+          <select id="presetSelect" onchange="onPresetSelectionChange()">
+            <option value="">— Nessun preset —</option>
+          </select>
+        </div>
+        <div class="preset-actions">
+          <button class="preset-btn" onclick="loadSelectedPreset()">Carica</button>
+          <button class="preset-btn danger" onclick="deleteSelectedPreset()">Elimina</button>
+        </div>
+      </div>
+      <p class="preset-status neutral" id="presetStatus"></p>
+    </div>
+
     <!-- WARNINGS -->
     <div id="warningsArea"></div>
 
@@ -592,6 +628,8 @@ const DOUGH_STYLE_PRESETS = [
   { id:'custom', label:'Custom', ballWeight:250, note:'' }
 ];
 
+const PRESET_STORAGE_KEY = 'pizzaCalcPresetsV1';
+
 const YEAST_CURVE = [
   [1,3.0],[2,1.8],[3,1.2],[4,0.85],[5,0.6],[6,0.45],
   [8,0.3],[10,0.22],[12,0.16],[16,0.1],[20,0.07],
@@ -615,6 +653,7 @@ let flourPanelOpen = false;
 let manualStrategy = false;
 let lastPlanContext = null;
 let lastScheduleShareLines = [];
+let savedPresets = [];
 
 // ===== INIT =====
 function init() {
@@ -622,6 +661,7 @@ function init() {
   populateFlourBrand();
   renderTrays();
   renderBlend();
+  loadSavedPresets();
   onDoughStyleChange();
   updateSliderProgress('hydration', 50, 85);
   updateSliderProgress('saltPct', 1.5, 4);
@@ -950,6 +990,223 @@ function onPfPctChange() { document.getElementById('pfPctBadge').textContent = d
 function updateSliderProgress(id, min, max) { const el = document.getElementById(id); el.style.setProperty('--progress', ((el.value-min)/(max-min))*100 + '%'); }
 function onTimeChange() { calculate(); }
 function getTotalHours() { const s = new Date(document.getElementById('startTime').value); const e = new Date(document.getElementById('stretchTime').value); if (isNaN(s)||isNaN(e)) return 0; return Math.max(0, (e - s) / 3600000); }
+
+// ===== PRESETS =====
+function setPresetStatus(message, tone='neutral') {
+  const el = document.getElementById('presetStatus');
+  if (!el) return;
+  el.className = `preset-status ${tone}`;
+  el.textContent = message;
+}
+
+function formatPresetUpdatedAt(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function savePresetsToStorage() {
+  localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(savedPresets));
+}
+
+function loadSavedPresets() {
+  try {
+    const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    savedPresets = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    savedPresets = [];
+  }
+  renderPresetSelect();
+  if (savedPresets.length === 0) setPresetStatus('Nessun preset salvato al momento.', 'neutral');
+  else setPresetStatus(`Preset disponibili: ${savedPresets.length}.`, 'neutral');
+}
+
+function renderPresetSelect(selectedId='') {
+  const sel = document.getElementById('presetSelect');
+  sel.innerHTML = '<option value="">— Seleziona preset —</option>';
+  const ordered = [...savedPresets].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  ordered.forEach(p => {
+    const dateLabel = formatPresetUpdatedAt(p.updatedAt);
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = dateLabel ? `${p.name} (${dateLabel})` : p.name;
+    if (selectedId && p.id === selectedId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function captureCurrentPresetState() {
+  return {
+    currentMode,
+    flourAmount: parseFloat(document.getElementById('flourAmount').value) || 1000,
+    doughStyle: document.getElementById('doughStyle').value,
+    customBallWeight: parseFloat(document.getElementById('customBallWeight').value) || 250,
+    hydration: parseFloat(document.getElementById('hydration').value) || 65,
+    saltPct: parseFloat(document.getElementById('saltPct').value) || 2.8,
+    yeastTypeDry: document.getElementById('yeastType').checked,
+    prefermentType,
+    pfPct: parseFloat(document.getElementById('pfPct').value) || 30,
+    pfHours: parseFloat(document.getElementById('pfHours').value) || 14,
+    startTime: document.getElementById('startTime').value,
+    stretchTime: document.getElementById('stretchTime').value,
+    roomBefore: parseFloat(document.getElementById('roomBefore').value) || 2,
+    roomAfter: parseFloat(document.getElementById('roomAfter').value) || 1.5,
+    manualStrategy,
+    numFolds: parseInt(document.getElementById('numFolds').value) || 3,
+    ballDivBefore: parseFloat(document.getElementById('ballDivBefore').value) || 2,
+    pizzaStyle: document.getElementById('pizzaStyle').value,
+    trays: trays.map(t => ({ preset: t.preset, dim1: t.dim1, dim2: t.dim2 })),
+    flourMode,
+    flourBrand: document.getElementById('flourBrand').value,
+    blendFlours: blendFlours.map(b => ({ flourId: b.flourId, pct: b.pct })),
+    wManualMode,
+    manualW: parseFloat(document.getElementById('manualW').value) || 260,
+    flourProtein: parseFloat(document.getElementById('flourProtein').value) || 12,
+    flourTypeEst: document.getElementById('flourTypeEst').value
+  };
+}
+
+function applyPresetState(state) {
+  if (!state) return;
+
+  document.getElementById('flourAmount').value = state.flourAmount ?? 1000;
+  document.getElementById('doughStyle').value = state.doughStyle || 'napoletana';
+  document.getElementById('customBallWeight').value = state.customBallWeight ?? 250;
+  document.getElementById('hydration').value = state.hydration ?? 65;
+  document.getElementById('saltPct').value = state.saltPct ?? 2.8;
+  document.getElementById('yeastType').checked = !!state.yeastTypeDry;
+  document.getElementById('pfPct').value = state.pfPct ?? 30;
+  document.getElementById('pfHours').value = state.pfHours ?? 14;
+  if (state.startTime) document.getElementById('startTime').value = state.startTime;
+  if (state.stretchTime) document.getElementById('stretchTime').value = state.stretchTime;
+  document.getElementById('roomBefore').value = state.roomBefore ?? 2;
+  document.getElementById('roomAfter').value = state.roomAfter ?? 1.5;
+  document.getElementById('numFolds').value = state.numFolds ?? 3;
+  document.getElementById('ballDivBefore').value = state.ballDivBefore ?? 2;
+  if (state.pizzaStyle) document.getElementById('pizzaStyle').value = state.pizzaStyle;
+
+  if (Array.isArray(state.trays) && state.trays.length > 0) {
+    trays = state.trays.map((t, i) => ({
+      id: i + 1,
+      preset: t.preset || 'round32',
+      dim1: t.dim1 || 32,
+      dim2: t.dim2 || 40
+    }));
+    trayIdCounter = trays.length;
+    renderTrays();
+  }
+
+  if (Array.isArray(state.blendFlours) && state.blendFlours.length > 0) {
+    blendFlours = state.blendFlours.map((b, i) => ({
+      id: i + 1,
+      flourId: b.flourId || 'caputo_pizzeria',
+      pct: b.pct || 100
+    }));
+    blendIdCounter = blendFlours.length;
+    renderBlend();
+  }
+
+  const targetMode = state.currentMode || 'flour';
+  if (currentMode !== targetMode) switchMode(targetMode);
+
+  switchPreferment(state.prefermentType || 'none');
+  document.getElementById('pfHours').value = state.pfHours ?? document.getElementById('pfHours').value;
+
+  switchWMode(state.wManualMode || 'yes');
+  document.getElementById('manualW').value = state.manualW ?? 260;
+  document.getElementById('flourProtein').value = state.flourProtein ?? 12;
+  document.getElementById('flourTypeEst').value = state.flourTypeEst || '00';
+
+  switchFlourMode(state.flourMode || 'brand');
+  document.getElementById('flourBrand').value = state.flourBrand || '';
+
+  const wantedManual = !!state.manualStrategy;
+  if (wantedManual !== manualStrategy) toggleManualStrategy();
+
+  onDoughStyleChange();
+  onHydrationChange();
+  onSaltChange();
+  onPfPctChange();
+  updateWFromCurrentMode();
+  calculate();
+}
+
+function saveCurrentPreset() {
+  const nameInput = document.getElementById('presetName');
+  const name = nameInput.value.trim();
+  if (!name) {
+    setPresetStatus('Inserisci un nome preset prima di salvare.', 'error');
+    return;
+  }
+
+  const state = captureCurrentPresetState();
+  const now = new Date().toISOString();
+  const existing = savedPresets.find(p => p.name.toLowerCase() === name.toLowerCase());
+
+  if (existing) {
+    existing.state = state;
+    existing.updatedAt = now;
+    existing.name = name;
+    renderPresetSelect(existing.id);
+    setPresetStatus(`Preset "${name}" aggiornato.`, 'ok');
+  } else {
+    const id = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    savedPresets.push({ id, name, updatedAt: now, state });
+    renderPresetSelect(id);
+    setPresetStatus(`Preset "${name}" salvato.`, 'ok');
+  }
+
+  savePresetsToStorage();
+}
+
+function onPresetSelectionChange() {
+  const id = document.getElementById('presetSelect').value;
+  if (!id) {
+    setPresetStatus('Seleziona un preset da caricare o eliminare.', 'neutral');
+    return;
+  }
+  const p = savedPresets.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('presetName').value = p.name;
+  setPresetStatus(`Preset selezionato: ${p.name}.`, 'neutral');
+}
+
+function loadSelectedPreset() {
+  const id = document.getElementById('presetSelect').value;
+  if (!id) {
+    setPresetStatus('Seleziona prima un preset da caricare.', 'error');
+    return;
+  }
+  const p = savedPresets.find(x => x.id === id);
+  if (!p) {
+    setPresetStatus('Preset non trovato.', 'error');
+    return;
+  }
+  applyPresetState(p.state);
+  document.getElementById('presetName').value = p.name;
+  setPresetStatus(`Preset "${p.name}" caricato.`, 'ok');
+}
+
+function deleteSelectedPreset() {
+  const sel = document.getElementById('presetSelect');
+  const id = sel.value;
+  if (!id) {
+    setPresetStatus('Seleziona prima un preset da eliminare.', 'error');
+    return;
+  }
+  const p = savedPresets.find(x => x.id === id);
+  if (!p) {
+    setPresetStatus('Preset non trovato.', 'error');
+    return;
+  }
+  if (!window.confirm(`Eliminare il preset "${p.name}"?`)) return;
+  savedPresets = savedPresets.filter(x => x.id !== id);
+  savePresetsToStorage();
+  renderPresetSelect();
+  setPresetStatus(`Preset "${p.name}" eliminato.`, 'ok');
+}
 
 // ===== YEAST =====
 function yeastPctFromEffectiveHours(h) {
